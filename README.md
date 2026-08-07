@@ -21,7 +21,7 @@ commande ». C'est elle qui décide de la technologie :
 | Lancement             | double-clic sur un `.exe` → alerte SmartScreen / antivirus  | idem                         | **on clique sur le favori**                     |
 | Mise à jour           | renvoyer un nouvel `.exe` à chaque correction               | idem                         | **`git push`, elle recharge la page**           |
 | Hébergement           | —                                                           | —                            | **GitHub Pages, gratuit**                       |
-| Lecture du QR         | pyzbar/OpenCV                                               | gozxing                      | `BarcodeDetector` du navigateur, sinon jsQR     |
+| Lecture du QR         | pyzbar/OpenCV                                               | gozxing                      | zxing-wasm (WebAssembly de zxing-cpp)           |
 | Écriture des fichiers | libre                                                       | libre                        | dossier choisi par l'utilisatrice (Edge/Chrome) |
 
 Le seul vrai avantage de Python ou Go serait l'accès libre au disque. Or depuis
@@ -141,7 +141,8 @@ directement, l'application tient en quelques centaines de lignes.
 | ------------------------------------ | ------------------------------------------------------------- |
 | `src/noms.ts`                        | prénoms, extensions, noms de fichiers — sans DOM              |
 | `src/rangement.ts`                   | numérotation et recherche d'un nom libre — sans DOM ni disque |
-| `src/lecture-qr.ts`                  | décodage des QR codes sur les photos                          |
+| `src/decodage-qr.ts`                 | décodage d'un QR code — sans DOM, testé sans navigateur       |
+| `src/lecture-qr.ts`                  | lecture d'une photo : son QR code et sa vignette              |
 | `src/generation-qr.ts`               | génération des QR codes des étiquettes                        |
 | `src/dom.ts`                         | accès aux éléments de la page, avec contrôle de type          |
 | `src/photos.ts`, `src/etiquettes.ts` | câblage de l'interface                                        |
@@ -159,16 +160,51 @@ Le repli quand la lecture échoue n'est pas un second algorithme : c'est la
 maîtresse qui corrige la case dans le tableau, avec le bouton « compléter les
 vides avec le prénom du dessus » pour les séries.
 
-Trois mécanismes de lecture, essayés dans cet ordre :
+### Le décodeur : zxing-wasm, et pourquoi pas les plus populaires
 
-1. **`BarcodeDetector`** — l'API de décodage intégrée à Chromium, sans
-   dépendance. C'est le décodeur le plus tolérant quand il est disponible.
-2. **[jsQR](https://github.com/cozmo/jsQR)** (1.4, Apache-2.0, ~150 kB) — repli
-   en JavaScript pur, port du décodeur ZXing. L'image est essayée à 1200, 2000
-   puis 3200 px de large : une étiquette de 200 px dans une photo de 12 Mpx
-   disparaît si l'on ne réduit qu'une seule fois.
-3. **Découpage en quatre zones** qui se chevauchent (60 % de la photo chacune),
-   réduites à 1600 px — rattrape les étiquettes posées dans un coin.
+Un seul décodeur,
+[zxing-wasm](https://github.com/Sec-ant/zxing-wasm) — la compilation
+WebAssembly de [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp). Il lit le
+fichier photo en une passe pleine résolution : ni redimensionnement, ni
+découpage en zones, ni détection native à essayer d'abord.
+
+Ce choix va contre la popularité, et il a été mesuré. Quatre décodeurs ont été
+passés sur les mêmes 22 photos, fabriquées par projection 3D de l'étiquette puis
+homographie inverse — c'est-à-dire de vraies images en perspective, pas de
+simples rotations :
+
+| Décodeur                                              | Cas décodés | Temps cumulé | Inclinaison    |
+| ----------------------------------------------------- | ----------- | ------------ | -------------- |
+| [jsQR](https://github.com/cozmo/jsQR)                 | 7 / 22      | 33,9 s       | échec dès 15°  |
+| [@zxing/library](https://github.com/zxing-js/library) | 7 / 22      | 19,9 s       | échec dès 15°  |
+| [qr-scanner](https://github.com/nimiq/qr-scanner)     | 6 / 22      | 23,0 s       | échec dès 15°  |
+| **zxing-wasm**                                        | **17 / 22** | **2,4 s**    | OK jusqu'à 45° |
+
+Les trois options en JavaScript pur échouent au même endroit parce qu'elles sont
+le même moteur : `qr-scanner` est un fork du portage jsQR, lui-même un portage de
+l'ancien ZXing Java, dont `@zxing/library` est l'autre portage. Elles héritent
+toutes de la même extraction de grille, incapable de redresser une perspective.
+Or une photo prise à main levée est presque toujours inclinée de 15 à 40° : c'est
+le cas normal, pas le cas limite.
+
+`BarcodeDetector`, l'API intégrée au navigateur, a été **retirée
+volontairement**. Elle reste expérimentale et son support dépend du système
+d'exploitation, donc elle introduisait un chemin de code au comportement
+variable selon le poste — impossible à reproduire lors d'un dépannage à
+distance — pour un gain nul face aux 100 ms de zxing-wasm.
+
+Le prix est le poids : ~450 ko gzippés de WebAssembly, contre 52 ko pour jsQR.
+Chargé une fois, mis en cache par le navigateur, sur un outil utilisé une fois
+par semaine depuis un ordinateur de bureau.
+
+Sur le risque de maintenance : `zxing-wasm` est une enveloppe mince, le décodeur
+est `zxing-cpp`, épinglé comme sous-module à un commit précis (exporté par le
+paquet sous `ZXING_CPP_COMMIT`). Si l'enveloppe était abandonnée, le `.wasm`
+reste figé dans le lockfile et empaqueté comme asset local : rien à récupérer,
+aucun service distant. C'est un profil de risque très différent de celui d'un
+décodeur abandonné, qui ne rattrapera jamais son retard.
+
+### La génération
 
 Pour la génération :
 [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (2.0, MIT,
@@ -224,10 +260,20 @@ quand l'amont suivra.
 - les prénoms et noms de fichiers (accents, caractères interdits, modèles) ;
 - la numérotation, y compris le deuxième passage sur les mêmes photos, qui doit
   reprendre à `_03` au lieu d'écraser `_01` ;
-- un **aller-retour QR complet** : le QR code est généré par la fonction que la
-  page d'étiquettes utilise réellement, « photographié » en pixels, réduit comme
-  le ferait un canvas, puis relu par jsQR — y compris le cas d'une petite
-  étiquette dans une photo de 12 Mpx et celui du découpage en zones.
+- la **robustesse du décodage**, sur des photos synthétiques mais réalistes : le
+  QR code est généré par la fonction que la page d'étiquettes utilise
+  réellement, puis projeté en 3D et rendu par homographie inverse avec
+  échantillonnage bilinéaire. Sont couverts l'inclinaison jusqu'à 45° sur un axe
+  et 35° sur deux, la rotation dans le plan, l'inclinaison combinée à la
+  rotation, et l'étiquette réduite à 150 px dans une photo de 3000 × 2000.
+
+Le fait de projeter l'étiquette au lieu de la tourner n'est pas un détail : la
+première version de ces tests utilisait des QR parfaitement droits, et laissait
+donc passer la seule dégradation que le décodeur d'alors ne savait pas traiter.
+
+Un test verrouille aussi une **limite assumée** — au-delà de 60° d'inclinaison,
+rien n'est décodé. S'il se met à passer un jour, c'est une bonne nouvelle à
+constater, pas une régression à corriger.
 
 Ce que les tests ne couvrent pas et qu'il faut vérifier à la main : le sélecteur
 de dossier natif de Windows, et de vraies photos d'appareil.
