@@ -1,31 +1,27 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 text-[17px] leading-relaxed;
+    @apply bg-slate-50 text-[17px] leading-relaxed text-slate-900;
   }
 }
 
 @layer components {
   .bouton,
   .bouton-secondaire {
-    @apply cursor-pointer rounded-lg border px-4 py-2 transition-colors
-           disabled:cursor-not-allowed disabled:opacity-45
-           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700;
+    @apply cursor-pointer rounded-lg border px-4 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:opacity-45;
   }
 
   .bouton {
-    @apply border-blue-700 bg-blue-700 text-white
-           hover:bg-blue-800 disabled:hover:bg-blue-700;
+    @apply border-blue-700 bg-blue-700 text-white hover:bg-blue-800 disabled:hover:bg-blue-700;
   }
 
   .bouton-secondaire {
-    @apply border-blue-700 bg-white text-blue-700
-           hover:bg-blue-50 disabled:hover:bg-white;
+    @apply border-blue-700 bg-white text-blue-700 hover:bg-blue-50 disabled:hover:bg-white;
   }
 
   .etape {

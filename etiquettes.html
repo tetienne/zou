@@ -1,46 +1,48 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Étiquettes QR — Photos d'élèves</title>
-<link rel="icon" href="favicon.svg">
-<script type="module" src="/src/etiquettes.ts"></script>
-</head>
-<body class="px-4 pb-16">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Étiquettes QR — Photos d'élèves</title>
+    <link rel="icon" href="favicon.svg" />
+    <script type="module" src="/src/etiquettes.ts"></script>
+  </head>
+  <body class="px-4 pb-16">
+    <header class="non-imprimable mx-auto max-w-4xl border-b-2 border-slate-300 pt-6 pb-4">
+      <h1 class="text-2xl font-bold">Créer les étiquettes</h1>
+      <p class="text-slate-500">Une étiquette = un QR code + le prénom écrit en dessous.</p>
+      <a class="mt-2 inline-block text-blue-700" href="index.html">← Retour</a>
+    </header>
 
-<header class="non-imprimable mx-auto max-w-4xl border-b-2 border-slate-300 pt-6 pb-4">
-  <h1 class="text-2xl font-bold">Créer les étiquettes</h1>
-  <p class="text-slate-500">Une étiquette = un QR code + le prénom écrit en dessous.</p>
-  <a class="mt-2 inline-block text-blue-700" href="index.html">← Retour</a>
-</header>
+    <main class="mx-auto max-w-4xl">
+      <section class="etape non-imprimable mt-4">
+        <h2 class="mb-3 text-xl font-semibold">Les prénoms</h2>
+        <p class="aide mb-2">
+          Un prénom par ligne. Ajoutez l'initiale du nom s'il y a deux fois le même prénom dans la classe (par exemple
+          <code class="rounded bg-slate-200 px-1">Léa B</code> et <code class="rounded bg-slate-200 px-1">Léa M</code>).
+        </p>
 
-<main class="mx-auto max-w-4xl">
-  <section class="etape non-imprimable mt-4">
-    <h2 class="mb-3 text-xl font-semibold">Les prénoms</h2>
-    <p class="aide mb-2">Un prénom par ligne. Ajoutez l'initiale du nom s'il y a deux fois le même
-      prénom dans la classe (par exemple <code class="rounded bg-slate-200 px-1">Léa B</code> et
-      <code class="rounded bg-slate-200 px-1">Léa M</code>).</p>
+        <label for="prenoms" class="sr-only">Liste des prénoms</label>
+        <textarea
+          id="prenoms"
+          rows="7"
+          class="champ min-h-36 w-full resize-y"
+          placeholder="Léa&#10;Noé&#10;Camille&#10;Youssef"
+        ></textarea>
 
-    <label for="prenoms" class="sr-only">Liste des prénoms</label>
-    <textarea id="prenoms" rows="7"
-      class="champ min-h-36 w-full resize-y"
-      placeholder="Léa&#10;Noé&#10;Camille&#10;Youssef"></textarea>
+        <p class="my-3">
+          <label for="copies">Nombre d'étiquettes par prénom :</label>
+          <input type="number" id="copies" value="8" min="1" max="60" class="champ w-20" />
+        </p>
 
-    <p class="my-3">
-      <label for="copies">Nombre d'étiquettes par prénom :</label>
-      <input type="number" id="copies" value="8" min="1" max="60" class="champ w-20">
-    </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" id="generer" class="bouton">Générer les étiquettes</button>
+          <button type="button" id="imprimer" class="bouton-secondaire" disabled>Imprimer</button>
+        </div>
+        <p class="aide mt-3" id="resume" role="status"></p>
+      </section>
 
-    <div class="flex flex-wrap items-center gap-3">
-      <button id="generer" class="bouton">Générer les étiquettes</button>
-      <button id="imprimer" class="bouton-secondaire" disabled>Imprimer</button>
-    </div>
-    <p class="aide mt-3" id="resume" role="status"></p>
-  </section>
-
-  <div class="mt-4 grid grid-cols-3 gap-[4mm]" id="planche"></div>
-</main>
-
-</body>
+      <div class="mt-4 grid grid-cols-3 gap-[4mm]" id="planche"></div>
+    </main>
+  </body>
 </html>

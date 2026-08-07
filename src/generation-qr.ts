@@ -20,7 +20,5 @@ export function matriceQrCode(texte: string): boolean[][] {
   qr.addData(texte);
   qr.make();
   const n = qr.getModuleCount();
-  return Array.from({ length: n }, (_, r) =>
-    Array.from({ length: n }, (_, c) => qr.isDark(r, c)),
-  );
+  return Array.from({ length: n }, (_, r) => Array.from({ length: n }, (_, c) => qr.isDark(r, c)));
 }

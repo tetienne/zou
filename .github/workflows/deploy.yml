@@ -15,6 +15,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Qualité et vérification tournent en parallèle : une erreur de style ne doit
+  # pas masquer un test cassé, et inversement.
+  qualite:
+    name: Format et lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Mise en forme (Prettier)
+        run: npm run format:check
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
   verifier:
     name: Types, tests et build
     runs-on: ubuntu-latest
@@ -48,7 +69,7 @@ jobs:
 
   deployer:
     name: Mise en ligne
-    needs: verifier
+    needs: [qualite, verifier]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

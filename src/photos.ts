@@ -13,6 +13,7 @@ import {
   type Modele,
 } from './noms';
 import { nomLibre, planifie, type Entree } from './rangement';
+import { requis } from './dom';
 
 // --- API File System Access -------------------------------------------------
 // Non typée par lib.dom : on décrit juste ce qu'on utilise.
@@ -27,7 +28,10 @@ interface Dossier {
   readonly name: string;
   values(): AsyncIterable<{ kind: string; name: string; getFile(): Promise<File> }>;
   getDirectoryHandle(nom: string, options?: { create?: boolean }): Promise<Dossier>;
-  getFileHandle(nom: string, options?: { create?: boolean }): Promise<{
+  getFileHandle(
+    nom: string,
+    options?: { create?: boolean },
+  ): Promise<{
     createWritable(): Promise<{ write(donnees: Blob): Promise<void>; close(): Promise<void> }>;
   }>;
 }
@@ -72,30 +76,24 @@ let analyseFaite = false;
 
 // --- Éléments ---------------------------------------------------------------
 
-function requis<T extends HTMLElement>(id: string): T {
-  const element = document.getElementById(id);
-  if (!element) throw new Error(`Élément « ${id} » introuvable`);
-  return element as T;
-}
-
 const el = {
-  avertissement: requis<HTMLDivElement>('avertissement'),
-  choisirSource: requis<HTMLButtonElement>('choisir-source'),
-  nomSource: requis<HTMLSpanElement>('nom-source'),
-  choisirDestination: requis<HTMLButtonElement>('choisir-destination'),
-  nomDestination: requis<HTMLSpanElement>('nom-destination'),
-  sourceSecours: requis<HTMLInputElement>('source-secours'),
-  sousDossiers: requis<HTMLInputElement>('sous-dossiers'),
-  modele: requis<HTMLSelectElement>('modele'),
-  analyser: requis<HTMLButtonElement>('analyser'),
-  remplir: requis<HTMLButtonElement>('remplir'),
-  progression: requis<HTMLProgressElement>('progression'),
-  etatAnalyse: requis<HTMLParagraphElement>('etat-analyse'),
-  blocResultats: requis<HTMLElement>('bloc-resultats'),
-  resultats: requis<HTMLTableSectionElement>('resultats'),
-  copier: requis<HTMLButtonElement>('copier'),
-  etatCopie: requis<HTMLSpanElement>('etat-copie'),
-  progressionCopie: requis<HTMLProgressElement>('progression-copie'),
+  avertissement: requis('avertissement', HTMLDivElement),
+  choisirSource: requis('choisir-source', HTMLButtonElement),
+  nomSource: requis('nom-source', HTMLSpanElement),
+  choisirDestination: requis('choisir-destination', HTMLButtonElement),
+  nomDestination: requis('nom-destination', HTMLSpanElement),
+  sourceSecours: requis('source-secours', HTMLInputElement),
+  sousDossiers: requis('sous-dossiers', HTMLInputElement),
+  modele: requis('modele', HTMLSelectElement),
+  analyser: requis('analyser', HTMLButtonElement),
+  remplir: requis('remplir', HTMLButtonElement),
+  progression: requis('progression', HTMLProgressElement),
+  etatAnalyse: requis('etat-analyse', HTMLParagraphElement),
+  blocResultats: requis('bloc-resultats', HTMLElement),
+  resultats: requis('resultats', HTMLTableSectionElement),
+  copier: requis('copier', HTMLButtonElement),
+  etatCopie: requis('etat-copie', HTMLSpanElement),
+  progressionCopie: requis('progression-copie', HTMLProgressElement),
 };
 
 const modeleChoisi = (): Modele => el.modele.value as Modele;
@@ -105,8 +103,8 @@ const modeleChoisi = (): Modele => el.modele.value as Modele;
 if (!supporteDossiers) {
   message(
     'Ce navigateur ne sait pas écrire directement dans un dossier. Les photos renommées ' +
-    'arriveront une par une dans votre dossier « Téléchargements ». Pour un rangement ' +
-    'automatique, utilisez Microsoft Edge ou Google Chrome.',
+      'arriveront une par une dans votre dossier « Téléchargements ». Pour un rangement ' +
+      'automatique, utilisez Microsoft Edge ou Google Chrome.',
   );
   el.choisirDestination.disabled = true;
   el.nomDestination.textContent = 'dossier « Téléchargements »';
@@ -119,7 +117,10 @@ el.choisirSource.addEventListener('click', () => void choisirSource());
 el.choisirDestination.addEventListener('click', () => void choisirDestination());
 el.sourceSecours.addEventListener('change', () => {
   const choisis = [...(el.sourceSecours.files ?? [])].filter((f) => estImage(f.name));
-  chargerFichiers(choisis.map((f) => ({ file: f, nomOrigine: f.name })), 'dossier choisi');
+  chargerFichiers(
+    choisis.map((f) => ({ file: f, nomOrigine: f.name })),
+    'dossier choisi',
+  );
 });
 el.analyser.addEventListener('click', () => void analyser());
 el.remplir.addEventListener('click', remplirLesVides);
@@ -225,8 +226,7 @@ async function analyser(): Promise<void> {
   el.analyser.disabled = false;
   el.remplir.disabled = false;
   analyseFaite = true;
-  el.etatAnalyse.textContent =
-    `${trouves} prénom(s) reconnu(s) sur ${fichiers.length} photo(s).`;
+  el.etatAnalyse.textContent = `${trouves} prénom(s) reconnu(s) sur ${fichiers.length} photo(s).`;
   recalculerNoms();
   majBoutonCopier();
 }
@@ -312,9 +312,8 @@ function recalculerNoms(): void {
 }
 
 function afficheLigne(ligne: Ligne): void {
-  const dossier = el.sousDossiers.checked && ligne.nomCible
-    ? `${nettoiePourFichier(prenomDe(ligne))}\\`
-    : '';
+  const dossier =
+    el.sousDossiers.checked && ligne.nomCible ? `${nettoiePourFichier(prenomDe(ligne))}\\` : '';
   ligne.tdCible.textContent = ligne.nomCible ? dossier + ligne.nomCible : '—';
 
   ligne.tr.classList.toggle('bg-amber-50', !ligne.copiee && ligne.statut === 'manquant');
@@ -398,11 +397,8 @@ async function copierDansDossier(ligne: Ligne, destination: Dossier): Promise<vo
     ? await destination.getDirectoryHandle(entree.prenom, { create: true })
     : destination;
 
-  const { nom, numero } = await nomLibre(
-    modeleChoisi(),
-    entree,
-    ligne.numero,
-    (candidat) => existeDeja(dossier, candidat),
+  const { nom, numero } = await nomLibre(modeleChoisi(), entree, ligne.numero, (candidat) =>
+    existeDeja(dossier, candidat),
   );
 
   const cible = await dossier.getFileHandle(nom, { create: true });

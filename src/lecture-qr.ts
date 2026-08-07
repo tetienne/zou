@@ -15,8 +15,12 @@ const ECHELLE_ZONE = 1600;
 // Environ 20 ko par photo en data URL : 200 photos tiennent en ~4 Mo.
 const TAILLE_VIGNETTE = 320;
 
-interface CodeDetecte { rawValue: string }
-interface Detecteur { detect(source: ImageBitmapSource): Promise<CodeDetecte[]> }
+interface CodeDetecte {
+  rawValue: string;
+}
+interface Detecteur {
+  detect(source: ImageBitmapSource): Promise<CodeDetecte[]>;
+}
 interface FabriqueDetecteur {
   new (options?: { formats?: string[] }): Detecteur;
   getSupportedFormats(): Promise<string[]>;
@@ -40,7 +44,12 @@ export async function detecteurNatif(): Promise<Detecteur | null> {
   return detecteur;
 }
 
-export interface Zone { x: number; y: number; w: number; h: number }
+export interface Zone {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 export interface PhotoLue {
   /** Contenu brut du QR code, chaîne vide si aucun code n'a été trouvé. */

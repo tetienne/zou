@@ -28,8 +28,8 @@ export function estLisible(nom: string): boolean {
  * étiquettes soient produites par un autre outil.
  */
 export function extraitPrenom(brut: string): string {
-  let valeur = String(brut).trim();
-  const parametre = valeur.match(/[?&](?:prenom|pr%C3%A9nom|nom|name)=([^&#]+)/i);
+  let valeur = brut.trim();
+  const parametre = /[?&](?:prenom|pr%C3%A9nom|nom|name)=([^&#]+)/i.exec(valeur);
   if (parametre?.[1]) {
     try {
       valeur = decodeURIComponent(parametre[1].replace(/\+/g, ' '));
@@ -42,14 +42,14 @@ export function extraitPrenom(brut: string): string {
   return valeur.trim();
 }
 
-const CARACTERES_INTERDITS = /[<>:"\/\\|?*]|[\p{Cc}\p{Cf}]/gu;
+const CARACTERES_INTERDITS = /[<>:"/\\|?*]|[\p{Cc}\p{Cf}]/gu;
 
 /**
  * Retire les caractères interdits dans un nom de fichier Windows.
  * Les accents et les traits d'union internes sont conservés.
  */
 export function nettoiePourFichier(texte: string): string {
-  const propre = String(texte)
+  const propre = texte
     .replace(CARACTERES_INTERDITS, '')
     .replace(/\s+/g, '-')
     .replace(/^[.\-\s]+|[.\-\s]+$/g, '')
@@ -73,8 +73,10 @@ export function nomFichier(
 ): string {
   const n = String(numero).padStart(2, '0');
   const base =
-    modele === 'prenom_num' ? `${prenom}_${n}`
-      : modele === 'date_prenom_num' ? `${date}_${prenom}_${n}`
+    modele === 'prenom_num'
+      ? `${prenom}_${n}`
+      : modele === 'date_prenom_num'
+        ? `${date}_${prenom}_${n}`
         : `${prenom}_${date}_${n}`;
   return ext ? `${base}.${ext}` : base;
 }
