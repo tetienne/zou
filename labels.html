@@ -8,16 +8,16 @@
     <script type="module" src="/src/labels.ts"></script>
   </head>
   <body class="px-4 pb-16">
-    <header class="no-print mx-auto max-w-5xl border-b-2 border-slate-300 pt-6 pb-4">
-      <p class="text-[0.8rem] font-semibold tracking-widest text-slate-500 uppercase">Zou</p>
-      <h1 class="mt-1 text-2xl font-bold">Créer les étiquettes</h1>
+    <header class="no-print border-tableau mx-auto max-w-5xl border-b-2 pt-6 pb-4">
+      <p class="text-micro font-semibold tracking-widest text-slate-500 uppercase">Zou</p>
+      <h1 class="text-h1 mt-1 font-bold">Créer les étiquettes</h1>
       <p class="mt-1 text-slate-500">Une étiquette = un QR code + le prénom écrit en dessous.</p>
       <a class="mt-3 inline-block text-blue-700 hover:underline" href="index.html">← Retour à l'accueil</a>
     </header>
 
     <main class="mx-auto max-w-5xl">
       <section class="step no-print mt-4">
-        <h2 class="mb-3 text-xl font-semibold">Les prénoms</h2>
+        <h2 class="text-h2 mb-3 font-semibold">Les prénoms</h2>
         <p class="hint mb-2">
           Un prénom par ligne. Ajoutez l'initiale du nom s'il y a deux fois le même prénom dans la classe (par exemple
           <code class="rounded bg-slate-200 px-1">Léa B</code> et <code class="rounded bg-slate-200 px-1">Léa M</code>).
@@ -41,10 +41,33 @@
           <button type="button" id="print" class="button-secondary" disabled>Imprimer</button>
         </div>
         <p class="hint mt-3" id="summary" role="status"></p>
+        <!-- Next to the button rather than in a paragraph below: these three settings
+             live in the print dialog, and getting one wrong wastes a whole sheet. -->
+        <p
+          class="border-tableau text-caption mt-3 flex items-start gap-3 rounded-xl border bg-slate-50 px-4 py-3 text-slate-700"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            class="mt-0.5 size-5 shrink-0 text-slate-500"
+          >
+            <path d="M6 9V2h12v7"></path>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <path d="M6 14h12v8H6z"></path>
+          </svg>
+          <span>
+            Dans la fenêtre d'impression : papier <strong>A4</strong>, échelle <strong>100 %</strong>, et
+            <strong>en-têtes et pieds de page</strong> décochés — sinon l'adresse du site et la date se posent sur la
+            première rangée d'étiquettes.
+          </span>
+        </p>
         <p class="hint mt-2">
-          Les pages sont préparées ici : chaque étiquette tient entière sur une page, aucune n'est coupée en deux. Dans
-          la fenêtre d'impression, choisissez du papier <strong>A4</strong>, une échelle de <strong>100 %</strong> et
-          décochez les <strong>en-têtes et pieds de page</strong>.
+          Les pages sont préparées ici : chaque étiquette tient entière sur une page, aucune n'est coupée en deux.
         </p>
         <p class="hint mt-2">
           Cette liste est conservée dans votre navigateur : elle sera proposée automatiquement quand vous rangerez les
@@ -53,7 +76,7 @@
       </section>
 
       <section class="step no-print">
-        <h2 class="mb-1 text-xl font-semibold">L'allure des étiquettes</h2>
+        <h2 class="text-h2 mb-1 font-semibold">L'allure des étiquettes</h2>
         <p class="hint mb-3">
           Ces réglages valent pour toute la planche et sont conservés d'une fois sur l'autre. Chaque prénom garde sa
           couleur et son dessin : l'enfant retrouve son étiquette sans savoir lire.
@@ -110,7 +133,7 @@
     </main>
 
     <footer
-      class="no-print mx-auto mt-10 flex max-w-5xl items-center gap-4 border-t border-slate-200 pt-4 text-[0.9rem] text-slate-500"
+      class="no-print border-tableau text-caption mx-auto mt-10 flex max-w-5xl items-center gap-4 border-t pt-4 text-slate-500"
     >
       <a
         class="inline-flex items-center gap-2 text-slate-500 hover:text-blue-700 hover:underline"
