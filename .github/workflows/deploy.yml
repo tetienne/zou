@@ -2,7 +2,14 @@ name: Verify and deploy
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      # Temporary, so this branch can be seen on the real site before it is
+      # merged. `workflow_dispatch` cannot serve that purpose here: GitHub only
+      # offers the "Run workflow" button for workflows that already exist on the
+      # default branch, and main currently holds nothing but the README.
+      # Remove this entry once the branch is merged.
+      - claude/qr-code-name-recognition-app-bcbxk6
   pull_request:
   workflow_dispatch:
 
@@ -62,7 +69,7 @@ jobs:
           VITE_BASE: /${{ github.event.repository.name }}/
 
       - name: Prepare the Pages artifact
-        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -70,16 +77,15 @@ jobs:
   deploy:
     name: Publish
     needs: [quality, verify]
-    # Pushes to main publish automatically. Any other branch can be published
-    # on demand from the Actions tab ("Run workflow"), which is how a change is
-    # tried on the real site before merging. Pull requests never deploy on
-    # their own.
+    # Anything but a pull request publishes: that means a push to one of the
+    # branches listed under `on.push.branches`, or a manual run. Keeping the
+    # branch list in one place avoids a second copy of it here.
     #
-    # There is only one Pages site, so a manual run REPLACES what is online.
-    # GitHub also gates this: the github-pages environment only accepts the
-    # default branch until the branch is added under
+    # There is only one Pages site, so publishing a branch REPLACES what is
+    # online. GitHub gates this separately: the github-pages environment only
+    # accepts the default branch until the branch is allowed under
     # Settings → Environments → github-pages → Deployment branches.
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pages: write

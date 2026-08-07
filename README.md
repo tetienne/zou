@@ -64,19 +64,26 @@ does not work over `file://` — and GitHub Pages provides it out of the box.
 
 ### Trying a branch on the real site, without merging
 
-Pushes to `main` publish automatically; any other branch can be published on
-demand. In the **Actions** tab, pick _Verify and deploy_ → _Run workflow_ →
-select the branch. Pull requests never deploy on their own.
+Add the branch to `on.push.branches` in the workflow, push, and it publishes.
+That is the whole mechanism: the deploy job runs for anything that is not a pull
+request, so the branch list lives in one place.
 
-Two things to know before doing it:
+`workflow_dispatch` looks like the obvious answer and is a trap while the project
+is young: GitHub only offers the _Run workflow_ button for workflows that already
+exist on the **default branch**. Until this workflow reaches `main`, neither the
+button nor the REST endpoint is available, whatever the file says on the branch.
 
-- There is a **single Pages site**, so a manual run replaces whatever is online.
-  Fine while nothing is in the teacher's hands, less so afterwards.
+Two things to know before publishing a branch:
+
+- There is a **single Pages site**, so publishing a branch replaces whatever is
+  online. Fine while nothing is in the teacher's hands, less so afterwards.
 - GitHub gates it independently of the workflow: the `github-pages` environment
   only accepts the default branch until the branch is allowed under
   `Settings` → `Environments` → `github-pages` → _Deployment branches and tags_.
   Without that the job fails with "Branch is not allowed to deploy to
   github-pages".
+
+Remove the branch from `on.push.branches` once it is merged.
 
 To check the base path without GitHub at all, build with it and serve the result
 from a matching subfolder:
