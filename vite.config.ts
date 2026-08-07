@@ -35,9 +35,37 @@ const minifyHtml = (): Plugin => ({
   },
 });
 
+// MIT asks that the copyright notice travel with every copy of the software.
+// The LICENSE file covers whoever clones the repository; it says nothing to
+// whoever copies the built `dist/` onto their own hosting, because the build
+// strips every source comment. This puts the notice back into the JavaScript
+// the site actually serves.
+//
+// Two decisions inside a two-line plugin:
+//
+//   - `generateBundle` rather than `rollupOptions.output.banner`. The banner is
+//     applied before Vite minifies, and Vite runs esbuild with
+//     `legalComments: 'none'`, which drops even a `/*!` legal comment. This hook
+//     runs after every `renderChunk`, so nothing can strip it afterwards.
+//   - entry chunks only. One notice per page satisfies the licence; stamping the
+//     shared chunks as well would repeat it three times for nobody's benefit,
+//     and the text barely compresses — it is close to its own weight in gzip.
+const NOTICE =
+  '/*! qr-school | MIT | Copyright (c) 2026 Thibaut Etienne | https://github.com/tetienne/qr-school */';
+
+const legalNotice = (): Plugin => ({
+  name: 'legal-notice',
+  apply: 'build',
+  generateBundle: (_options, bundle) => {
+    for (const chunk of Object.values(bundle)) {
+      if (chunk.type === 'chunk' && chunk.isEntry) chunk.code = `${NOTICE}\n${chunk.code}`;
+    }
+  },
+});
+
 export default defineConfig({
   base,
-  plugins: [tailwindcss(), minifyHtml()],
+  plugins: [tailwindcss(), minifyHtml(), legalNotice()],
   build: {
     outDir: 'dist',
     rollupOptions: {
@@ -48,6 +76,9 @@ export default defineConfig({
       },
     },
   },
+  // The worker is bundled by a build of its own, which does not inherit the
+  // plugins above.
+  worker: { format: 'es', plugins: () => [legalNotice()] },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
