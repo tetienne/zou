@@ -73,20 +73,35 @@ of the photos in the folder, not the order the gallery displays them in.
 
 ## Browsers
 
-| Browser                                           | Result                                                                                |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Chrome, Edge on a computer                        | everything works, files written straight into the chosen folder                       |
-| Firefox, Safari, Brave, and every phone or tablet | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
+| Browser                                    | Result                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Chrome and Edge, desktop 86+, Android 132+ | everything works, files written straight into the chosen folder                       |
+| Firefox, Safari, Brave                     | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
 
-Being Chromium is not the criterion, which is why the second row is longer than
-it looks. **Brave blocks the File System Access API on purpose** and has done
-since [brave-browser#11407][brave], so it lands in the Downloads row like Firefox
-— sending the teacher there, as the warning used to, only showed her the same
-warning again. No browser on a phone or a tablet has the picker either, Chromium
-or not. Other desktop forks (Vivaldi, Opera) generally do, but the app promises
-nothing it has not been run on.
+Neither the engine nor the platform decides that table, which is why the warning
+must not read one off the other:
 
-[brave]: https://github.com/brave/brave-browser/issues/11407
+- **Brave is Chromium and still lands in the second row.** It defines
+  `kFileSystemAccessAPI` as `FEATURE_DISABLED_BY_DEFAULT` ([brave-core,
+  `chromium_src/third_party/blink/common/features.cc`][brave-feature]) after
+  deciding to [remove support for the API][brave-issue] in 2020, so
+  `showDirectoryPicker` is simply absent. A desktop Brave can be talked into it
+  under `brave://flags/#file-system-access-api`, but that is not something to ask
+  of a teacher — and the warning used to send her to Brave, which greeted her
+  with the same warning.
+- **Android moved.** Chrome had no picker there until version 132 shipped the API
+  on Android and in WebView ([MDN compat data][bcd]), so "use a computer" stopped
+  being true while nobody was looking.
+
+Firefox and Safari do expose the `FileSystemHandle` interfaces, but only over the
+origin-private file system — no picker, so no folder of the teacher's choosing.
+Other desktop forks (Vivaldi, Opera) mirror Chrome and very probably work; they
+are absent from the table because assuming exactly that is what put Brave in the
+wrong row.
+
+[brave-feature]: https://github.com/brave/brave-core/blob/master/chromium_src/third_party/blink/common/features.cc
+[brave-issue]: https://github.com/brave/brave-browser/issues/11407
+[bcd]: https://developer.mozilla.org/docs/Web/API/Window/showDirectoryPicker
 
 The app says so itself: in a browser of the second row, the filing page warns
 about Downloads and greys out the destination folder.

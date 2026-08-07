@@ -1,14 +1,14 @@
 // Can the browser write straight into a folder the teacher picks?
 //
-// Chrome and Edge have done it since 2021 through the File System Access API.
-// Firefox and Safari do not, and fall back to one download per photo — but so do
-// browsers no list would think to exclude: Brave withholds the picker on purpose
-// though it is Chromium, and every browser on a phone or a tablet lacks it.
+// Chrome and Edge have done it since 2020 through the File System Access API;
+// Firefox and Safari expose no picker at all and fall back to one download per
+// photo. Neither the engine nor the platform settles it, though: Brave ships
+// Chromium and turns the API off, while Chrome on Android went from lacking the
+// picker to having it in version 132.
 //
-// The pages therefore ask the API instead of naming browsers. Being Chromium
-// predicts nothing, a list of names is wrong the moment a fork changes its mind,
-// and it is the wrong question to put to the teacher, who should not have to
-// know which engine she is running.
+// The pages therefore ask the API instead of reasoning about browsers. Any list
+// of names is a snapshot of a moment, and it is the wrong question to put to the
+// teacher, who should not have to know which engine she is running.
 
 // --- File System Access API -------------------------------------------------
 // Not typed by lib.dom, so we describe only what we use.
