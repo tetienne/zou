@@ -1,8 +1,8 @@
 # Working in this repository
 
-`README.md` is the reference: why the app is a static page, how it is deployed,
-how the teacher uses it, and what each file does. Read it before a first change.
-What follows is only what an agent gets wrong without being told.
+`README.md` is the reference: how the teacher uses the app, how it is deployed,
+and what each file does. Read it before a first change. What follows is only
+what an agent gets wrong without being told.
 
 ## Commits and pull requests
 
