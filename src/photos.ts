@@ -285,7 +285,6 @@ async function offerRememberedFolders(): Promise<void> {
     el.sourceResume.addEventListener('click', () => void resumeSource(source));
   }
 
-  if (!supportsDirectories) return;
   const target = await recallFolder('destination');
   if (target) {
     el.destinationRecallName.textContent = target.name;
