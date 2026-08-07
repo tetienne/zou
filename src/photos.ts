@@ -2,7 +2,7 @@
 // gallery, then copy the photos out under their new names.
 
 import './style.css';
-import { readPhoto } from './photo-reading';
+import { scanPhotos as readFolder, type ScannedPhoto } from './photo-scanning';
 import {
   buildFileName,
   extension,
@@ -34,6 +34,8 @@ interface Row {
   readonly ext: string;
   /** False for HEIC/HEIF: the browser cannot display them. */
   readonly readable: boolean;
+  /** Object URL of the thumbnail, empty when there is none. Ours to release. */
+  readonly thumbnail: string;
   readonly field: HTMLInputElement;
   readonly card: HTMLElement;
   readonly nameArea: HTMLParagraphElement;
@@ -235,9 +237,8 @@ async function chooseDestination(): Promise<void> {
 
 function loadFiles(found: { file: File; originalName: string }[], directoryName: string): void {
   files = found;
-  rows = [];
   scanDone = false;
-  el.results.textContent = '';
+  clearRows();
   el.resultsBlock.hidden = true;
   el.needsAttention.hidden = true;
   el.allReady.hidden = true;
@@ -253,40 +254,38 @@ async function scanPhotos(): Promise<void> {
   el.scan.disabled = true;
   el.copy.disabled = true;
   el.copyStatus.textContent = '';
-  el.results.textContent = '';
-  rows = [];
+  clearRows();
   el.resultsBlock.hidden = false;
   el.scanProgress.hidden = false;
   el.scanProgress.max = files.length;
   el.scanProgress.value = 0;
+  el.scanStatus.textContent = `Lecture de ${files.length} photo(s)…`;
 
   let recognised = 0;
-  for (const [index, { file, originalName }] of files.entries()) {
-    el.scanStatus.textContent = `Lecture de ${originalName} (${index + 1}/${files.length})…`;
 
-    let firstName = '';
-    let thumbnail = '';
-    let status: Row['status'] = 'missing';
+  // The workers read the folder; this callback runs once per photo, in folder
+  // order, so the numbering still follows the photos and not the clock.
+  await readFolder(
+    files.map(({ file }) => file),
+    (index, photo) => {
+      const entry = files[index];
+      if (!entry) return;
+      const firstName = firstNameFrom(photo);
+      if (firstName) recognised++;
 
-    if (!isReadable(originalName)) {
-      status = 'error';
-    } else {
-      try {
-        const read = await readPhoto(file);
-        thumbnail = read.thumbnail;
-        firstName = read.text ? extractFirstName(read.text) : '';
-        if (firstName) {
-          status = 'ok';
-          recognised++;
-        }
-      } catch {
-        status = 'error';
-      }
-    }
-
-    rows.push(createRow(file, originalName, firstName, thumbnail, status));
-    el.scanProgress.value = index + 1;
-  }
+      rows.push(
+        createRow(
+          entry.file,
+          entry.originalName,
+          firstName,
+          photo?.thumbnail ? URL.createObjectURL(photo.thumbnail) : '',
+          photo === null ? 'error' : firstName ? 'ok' : 'missing',
+        ),
+      );
+      el.scanProgress.value = index + 1;
+      el.scanStatus.textContent = `Lecture des photos (${index + 1}/${files.length})…`;
+    },
+  );
 
   el.scanProgress.hidden = true;
   el.scan.disabled = false;
@@ -296,6 +295,19 @@ async function scanPhotos(): Promise<void> {
   recomputeNames();
   sortCards();
   refreshCopyButton();
+}
+
+function firstNameFrom(photo: ScannedPhoto | null): string {
+  return photo?.text ? extractFirstName(photo.text) : '';
+}
+
+/** Drops the gallery, releasing the thumbnails the browser is holding for us. */
+function clearRows(): void {
+  for (const row of rows) {
+    if (row.thumbnail) URL.revokeObjectURL(row.thumbnail);
+  }
+  rows = [];
+  el.results.textContent = '';
 }
 
 // --- Gallery ----------------------------------------------------------------
@@ -357,6 +369,7 @@ function createRow(
     date: fileDate(file.lastModified),
     ext: extension(originalName),
     readable: isReadable(originalName),
+    thumbnail,
     field,
     card,
     nameArea,
