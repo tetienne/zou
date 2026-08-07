@@ -2,14 +2,7 @@ name: Verify and deploy
 
 on:
   push:
-    branches:
-      - main
-      # Temporary, so this branch can be seen on the real site before it is
-      # merged. `workflow_dispatch` cannot serve that purpose here: GitHub only
-      # offers the "Run workflow" button for workflows that already exist on the
-      # default branch, and main currently holds nothing but the README.
-      # Remove this entry once the branch is merged.
-      - claude/qr-code-name-recognition-app-bcbxk6
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
