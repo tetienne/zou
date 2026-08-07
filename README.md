@@ -25,7 +25,7 @@ is what picks the technology:
 | Updating      | ship a new `.exe` for every fix                       | same                    | **`git push`, she reloads the page**        |
 | Hosting       | —                                                     | —                       | **GitHub Pages, free**                      |
 | QR decoding   | pyzbar / OpenCV                                       | gozxing                 | zxing-wasm (WebAssembly build of zxing-cpp) |
-| Writing files | unrestricted                                          | unrestricted            | folder the user picks (Edge / Chrome)       |
+| Writing files | unrestricted                                          | unrestricted            | folder the user picks (Chromium browsers)   |
 
 The only real advantage of Python or Go would be unrestricted disk access — and
 Chromium has been able to do that since 2021 through the **File System Access**
@@ -169,12 +169,19 @@ front keeps the number matching its place in the folder.
 
 ## Browsers
 
-| Browser                                 | Result                                                                                |
-| --------------------------------------- | ------------------------------------------------------------------------------------- |
-| Microsoft Edge, Google Chrome (Windows) | everything works, files written straight into the chosen folder                       |
-| Firefox, Safari                         | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
+| Browser                                                   | Result                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Any Chromium browser: Edge, Chrome, Vivaldi, Brave, Opera | everything works, files written straight into the chosen folder                       |
+| Firefox, Safari                                           | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
 
 Edge ships with Windows, so that is the one to recommend.
+
+Neither page names browsers to decide what to do: `folder-access.ts` asks for
+`showDirectoryPicker`, which is what actually separates the two rows above — a
+list of names would accuse a Chromium fork that works perfectly well. The home
+page keeps quiet where the picker exists and shows the Downloads warning where it
+does not; the filing page additionally disables the destination folder and the
+per-first-name subfolders, which it cannot honour through downloads.
 
 ---
 
@@ -198,16 +205,17 @@ TypeScript in strict mode (including `noUncheckedIndexedAccess`), Tailwind CSS 4
 through its Vite plugin, no UI framework: the DOM is driven directly and the app
 fits in a few hundred lines.
 
-| File                             | Role                                                    |
-| -------------------------------- | ------------------------------------------------------- |
-| `src/names.ts`                   | first names, extensions, output file names — DOM-free   |
-| `src/filing.ts`                  | numbering and free-name lookup — no DOM, no disk        |
-| `src/qr-decoding.ts`             | decoding a QR code — DOM-free, tested without a browser |
-| `src/qr-generation.ts`           | generating the label QR codes                           |
-| `src/label-theme.ts`             | palettes, drawings and label options — DOM-free         |
-| `src/photo-reading.ts`           | reading a photo: its QR code and its thumbnail          |
-| `src/dom.ts`                     | element lookup with a runtime type check                |
-| `src/photos.ts`, `src/labels.ts` | interface wiring                                        |
+| File                             | Role                                                     |
+| -------------------------------- | -------------------------------------------------------- |
+| `src/names.ts`                   | first names, extensions, output file names — DOM-free    |
+| `src/filing.ts`                  | numbering and free-name lookup — no DOM, no disk         |
+| `src/qr-decoding.ts`             | decoding a QR code — DOM-free, tested without a browser  |
+| `src/qr-generation.ts`           | generating the label QR codes                            |
+| `src/label-theme.ts`             | palettes, drawings and label options — DOM-free          |
+| `src/photo-reading.ts`           | reading a photo: its QR code and its thumbnail           |
+| `src/dom.ts`                     | element lookup with a runtime type check                 |
+| `src/folder-access.ts`           | File System Access types, and whether the browser has it |
+| `src/photos.ts`, `src/labels.ts` | interface wiring                                         |
 
 Business logic is deliberately kept away from the DOM: `names.ts` and `filing.ts`
 are tested without a browser, and `filing.ts` only touches the disk through an
