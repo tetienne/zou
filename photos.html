@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ranger les photos — Photos d'élèves</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Ranger les photos</h1>
+  <p class="sous-titre">Les photos sont copiées et renommées. Les originaux ne sont pas touchés.</p>
+  <a class="retour" href="index.html">← Retour</a>
+</header>
+
+<main>
+
+  <div id="avertissement"></div>
+
+  <div class="etape">
+    <h2>1. Les photos à ranger</h2>
+    <div class="choix">
+      <button id="choisir-source">Choisir le dossier des photos</button>
+      <span class="dossier" id="nom-source">aucun dossier choisi</span>
+    </div>
+  </div>
+
+  <div class="etape">
+    <h2>2. Où les ranger</h2>
+    <div class="choix">
+      <button id="choisir-destination">Choisir le dossier de destination</button>
+      <span class="dossier" id="nom-destination">aucun dossier choisi</span>
+    </div>
+    <label class="option">
+      <input type="checkbox" id="sous-dossiers" checked>
+      Créer un sous-dossier par prénom
+    </label>
+    <label class="option">
+      Nom des fichiers :
+      <select id="modele">
+        <option value="prenom_date_num">Léa_2026-06-14_01.jpg</option>
+        <option value="prenom_num">Léa_01.jpg</option>
+        <option value="date_prenom_num">2026-06-14_Léa_01.jpg</option>
+      </select>
+    </label>
+    <p class="aide">La date est celle de la photo (date du fichier).</p>
+  </div>
+
+  <div class="etape">
+    <h2>3. Lire les QR codes</h2>
+    <div class="choix">
+      <button id="analyser" disabled>Analyser les photos</button>
+      <button id="remplir" class="secondaire" disabled>Compléter les vides avec le prénom du dessus</button>
+    </div>
+    <progress id="progression" value="0" max="1" hidden></progress>
+    <p class="aide" id="etat-analyse"></p>
+  </div>
+
+  <div class="etape" id="bloc-resultats" hidden>
+    <h2>4. Vérifier et copier</h2>
+    <p class="aide">Vous pouvez corriger un prénom directement dans le tableau.
+      Les lignes sans prénom ne seront pas copiées.</p>
+    <div class="choix">
+      <button id="copier" disabled>Copier les photos</button>
+      <span id="etat-copie" class="aide"></span>
+    </div>
+    <progress id="progression-copie" value="0" max="1" hidden></progress>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Photo d'origine</th>
+          <th>Prénom</th>
+          <th>Nouveau nom</th>
+          <th>État</th>
+        </tr>
+      </thead>
+      <tbody id="resultats"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<input type="file" id="source-secours" webkitdirectory directory multiple accept="image/*" hidden>
+
+<script src="vendor/jsQR.js"></script>
+<script src="photos.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Étiquettes QR — Photos d'élèves</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Créer les étiquettes</h1>
+  <p class="sous-titre">Une étiquette = un QR code + le prénom écrit en dessous.</p>
+  <a class="retour" href="index.html">← Retour</a>
+</header>
+
+<main>
+  <div class="etape non-imprimable">
+    <h2>Les prénoms</h2>
+    <p class="aide">Un prénom par ligne. Ajoutez l'initiale du nom s'il y a deux fois le même prénom
+      dans la classe (par exemple <code>Léa B</code> et <code>Léa M</code>).</p>
+    <textarea id="prenoms" placeholder="Léa&#10;Noé&#10;Camille&#10;Youssef"></textarea>
+
+    <p>
+      <label class="option">
+        Nombre d'étiquettes par prénom :
+        <input type="number" id="copies" value="8" min="1" max="60">
+      </label>
+    </p>
+
+    <div class="choix">
+      <button id="generer">Générer les étiquettes</button>
+      <button id="imprimer" class="secondaire" disabled>Imprimer</button>
+    </div>
+    <p class="aide" id="resume"></p>
+  </div>
+
+  <div class="planche" id="planche"></div>
+</main>
+
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/qrcode_UTF8.js"></script>
+<script src="etiquettes.js"></script>
+</body>
+</html>
