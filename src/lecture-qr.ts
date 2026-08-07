@@ -10,7 +10,10 @@ import jsQR from 'jsqr';
 
 const ECHELLES = [1200, 2000, 3200];
 const ECHELLE_ZONE = 1600;
-const TAILLE_VIGNETTE = 128;
+// Assez grand pour qu'une vignette reste nette affichée en grille, où la
+// maîtresse doit reconnaître le travail de l'enfant d'un coup d'œil.
+// Environ 20 ko par photo en data URL : 200 photos tiennent en ~4 Mo.
+const TAILLE_VIGNETTE = 320;
 
 interface CodeDetecte { rawValue: string }
 interface Detecteur { detect(source: ImageBitmapSource): Promise<CodeDetecte[]> }
