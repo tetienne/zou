@@ -82,17 +82,20 @@ const el = {
   subfolders: required('subfolders', HTMLInputElement),
   pattern: required('pattern', HTMLSelectElement),
   scan: required('scan', HTMLButtonElement),
+  scanBlocked: required('scan-blocked', HTMLParagraphElement),
   scanProgress: required('scan-progress', HTMLProgressElement),
   scanStatus: required('scan-status', HTMLParagraphElement),
   resultsBlock: required('results-block', HTMLElement),
   results: required('results', HTMLDivElement),
   needsAttention: required('needs-attention', HTMLDivElement),
   needsAttentionText: required('needs-attention-text', HTMLSpanElement),
+  heicNote: required('heic-note', HTMLParagraphElement),
   allReady: required('all-ready', HTMLParagraphElement),
   summary: required('summary', HTMLParagraphElement),
   knownNames: required('known-names', HTMLDataListElement),
   copy: required('copy', HTMLButtonElement),
   copyStatus: required('copy-status', HTMLSpanElement),
+  copyBlocked: required('copy-blocked', HTMLParagraphElement),
   copyProgress: required('copy-progress', HTMLProgressElement),
 };
 
@@ -238,6 +241,7 @@ async function chooseDestination(): Promise<void> {
     return;
   }
   el.destinationName.textContent = destination.name;
+  el.chooseDestination.textContent = 'Changer de dossier de destination';
   refreshCopyButton();
 }
 
@@ -249,9 +253,13 @@ function loadFiles(found: { file: File; originalName: string }[], directoryName:
   el.needsAttention.hidden = true;
   el.allReady.hidden = true;
   el.summary.textContent = '';
-  el.sourceName.textContent = `${directoryName} — ${found.length} photo(s)`;
+  el.sourceName.textContent = `${directoryName} — ${found.length} photo${plural(found.length)}`;
+  el.chooseSource.textContent = 'Changer de dossier';
   el.scan.disabled = found.length === 0;
-  el.scanStatus.textContent = found.length === 0 ? 'Aucune image trouvée dans ce dossier.' : '';
+  el.scanStatus.textContent = '';
+  el.scanBlocked.textContent =
+    found.length === 0 ? 'Ce dossier ne contient aucune image. Choisissez-en un autre.' : '';
+  el.scanBlocked.hidden = found.length > 0;
 }
 
 // --- Scanning ---------------------------------------------------------------
@@ -260,6 +268,7 @@ async function scanPhotos(): Promise<void> {
   el.scan.disabled = true;
   el.copy.disabled = true;
   el.copyStatus.textContent = '';
+  el.scanBlocked.hidden = true;
   clearRows();
   el.resultsBlock.hidden = false;
   el.scanProgress.hidden = false;
@@ -341,20 +350,20 @@ function createRow(
     const empty = document.createElement('p');
     empty.className =
       'flex size-full flex-col items-center justify-center gap-2 px-3 text-center ' +
-      'text-[0.85rem] text-slate-600';
+      'text-caption text-slate-600';
     empty.append(icon('forbidden', 'size-7 text-slate-500'), 'Aperçu impossible');
     imageArea.append(empty);
   }
 
   const bottom = document.createElement('div');
-  bottom.className = 'flex flex-1 flex-col gap-2 border-t border-slate-200 p-3';
+  bottom.className = 'flex flex-1 flex-col gap-2 border-t border-tableau p-3';
 
   const field = document.createElement('input');
   field.type = 'text';
   field.value = firstName;
   field.placeholder = 'Prénom';
   field.autocomplete = 'off';
-  field.className = 'field w-full text-[1.05rem]';
+  field.className = 'field w-full text-lead';
   field.setAttribute('list', 'known-names');
   field.setAttribute('aria-label', `Prénom pour ${originalName}`);
 
@@ -362,7 +371,7 @@ function createRow(
   const statusArea = document.createElement('p');
 
   const origin = document.createElement('p');
-  origin.className = 'mt-auto pt-1 text-[0.8rem] break-all text-slate-500';
+  origin.className = 'mt-auto pt-1 text-micro break-all text-slate-500';
   origin.textContent = originalName;
 
   bottom.append(field, nameArea, statusArea, origin);
@@ -394,7 +403,9 @@ function createRow(
   });
   // Re-sorting waits for the end of the edit: moving the card on every letter
   // would make the photo jump under the teacher's fingers.
-  field.addEventListener('change', sortCards);
+  field.addEventListener('change', () => {
+    sortCards(row.card);
+  });
 
   return row;
 }
@@ -415,10 +426,10 @@ function renderRow(row: Row): void {
     el.subfolders.checked && row.targetName ? `${sanitiseForFileName(firstNameOf(row))}\\` : '';
 
   if (row.targetName) {
-    row.nameArea.className = 'font-mono text-[0.85rem] break-all text-slate-700';
+    row.nameArea.className = 'font-mono text-caption break-all text-slate-700';
     row.nameArea.textContent = folder + row.targetName;
   } else {
-    row.nameArea.className = 'text-[0.85rem] text-amber-900';
+    row.nameArea.className = 'text-caption text-amber-900';
     row.nameArea.textContent = 'Pas encore de nom de fichier';
   }
 
@@ -484,7 +495,7 @@ function rowState(row: Row): RowState {
  * `rows` is never reordered — numbering follows the order of the photos, not
  * the order they are displayed in.
  */
-function sortCards(): void {
+function sortCards(moved?: HTMLElement): void {
   const order = [...rows.filter((row) => !firstNameOf(row)), ...rows.filter(firstNameOf)];
   if (order.every((row, index) => el.results.children[index] === row.card)) return;
 
@@ -498,6 +509,22 @@ function sortCards(): void {
     activeField.focus();
     if (caret !== null) activeField.setSelectionRange(caret, caret);
   }
+
+  if (moved) flash(moved);
+}
+
+/** The card is somewhere else now; the ring is how she follows it there. */
+function flash(card: HTMLElement): void {
+  card.classList.remove('photo-card-moved');
+  card.getBoundingClientRect(); // restarts the animation on a second edit
+  card.classList.add('photo-card-moved');
+  card.addEventListener(
+    'animationend',
+    () => {
+      card.classList.remove('photo-card-moved');
+    },
+    { once: true },
+  );
 }
 
 function refreshSummary(): void {
@@ -530,12 +557,43 @@ function refreshSummary(): void {
       ? '1 photo n’a pas encore de prénom.'
       : `${toFix} photos n’ont pas encore de prénom.`;
   el.allReady.hidden = !scanDone || toFix > 0 || rows.length === 0;
+
+  // The remedy is on the phone, not in the app, so saying "illisible" per photo
+  // leaves her with nothing to do.
+  const heic = rows.filter((row) => !row.readable).length;
+  el.heicNote.hidden = heic === 0;
+  el.heicNote.textContent =
+    heic === 0
+      ? ''
+      : `Dont ${heic} au format HEIC, que le navigateur ne sait pas ouvrir. Sur l’iPhone, ` +
+        'réglez Appareil photo › Formats sur « Le plus compatible » pour les prochaines photos, ' +
+        'et convertissez celles-ci en JPEG.';
 }
 
 function refreshCopyButton(): void {
   const pending = rows.some((row) => firstNameOf(row) && !row.copied);
   const destinationReady = !supportsDirectories || destination !== null;
   el.copy.disabled = !(scanDone && pending && destinationReady);
+
+  const reason = el.copy.disabled ? copyBlockedReason(pending, destinationReady) : '';
+  el.copyBlocked.textContent = reason;
+  el.copyBlocked.hidden = reason === '';
+}
+
+/**
+ * A dead button explains nothing on its own, and the teacher has no screen
+ * reader to read a description to her. This block is only on screen from the
+ * moment the reading starts, so it never has to word the "not scanned yet" case.
+ */
+function copyBlockedReason(pending: boolean, destinationReady: boolean): string {
+  if (!scanDone) return 'Lecture des QR codes en cours…';
+  if (!destinationReady) return 'Choisissez le dossier de destination, à l’étape 2.';
+  if (!pending && rows.length > 0) {
+    return rows.some(firstNameOf)
+      ? 'Toutes les photos qui ont un prénom sont déjà copiées.'
+      : 'Aucune photo n’a encore de prénom : une photo sans prénom n’est pas copiée.';
+  }
+  return '';
 }
 
 // --- Copying ----------------------------------------------------------------
