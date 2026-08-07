@@ -130,10 +130,10 @@ function draw(): void {
     sheet.append(pageElement(page, index + 1, sheets.length));
   });
 
-  const total = printedNames.length * copies;
-  summary.textContent =
-    `${String(printedNames.length)} prénom(s) × ${String(copies)} = ${String(total)} étiquettes, ` +
-    `sur ${String(sheets.length)} page(s) A4.`;
+  // Nothing to say once the sheet is there: it is on screen, each page carries
+  // its own number, and counting the labels back to the teacher tells her what
+  // she just typed.
+  summary.textContent = '';
   printButton.disabled = false;
 }
 
