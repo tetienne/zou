@@ -1,4 +1,4 @@
-# qr-school — filing pupils' artwork photos by QR code
+# Zou — filing pupils' artwork photos by QR code
 
 A small web app that automatically files photos of pupils' work. The teacher
 puts a QR label carrying the child's first name next to the work, photographs
@@ -10,6 +10,31 @@ processing happens in the browser.**
 
 The interface is in French because the user is a French primary school teacher.
 Everything else — code, identifiers, comments, tests, this file — is in English.
+
+## Name
+
+_Zou_ is the French « et zou, c'est rangé » — the sound of something put away in
+one gesture. It says nothing about what the app does, and that is the point: the
+page headings and the tab titles already say it, which leaves the name free to be
+short enough to say out loud. It sits in the small caps line above each heading,
+where `Photos d'élèves` used to describe the app to someone who could already read
+the description underneath.
+
+Three things deliberately keep the old name `qr-school`, and none of them is an
+oversight:
+
+- **The `localStorage` keys** (`qr-school.names`, `qr-school.label-options`,
+  `qr-school.size`). They identify data already sitting in the teacher's browser.
+  Renaming them empties her class list and resets the sheet style, with nothing on
+  screen to explain why — a rename with a silent cost, for cosmetic gain.
+- **The GitHub links** in the three footers and in the build notice. GitHub
+  redirects a renamed repository permanently, so the old URL is right both before
+  and after; the new one would 404 until the day the rename happens.
+- **The repository, so far.** Renaming it is one setting and needs no code
+  change — `deploy.yml` derives `VITE_BASE` from
+  `github.event.repository.name` — but it moves the site to
+  `https://<user>.github.io/zou/`, and the old path does not follow. The teacher's
+  bookmark has to be sent again. That, not the code, is what makes it a decision.
 
 ---
 

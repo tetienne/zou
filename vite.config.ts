@@ -50,8 +50,11 @@ const minifyHtml = (): Plugin => ({
 //   - entry chunks only. One notice per page satisfies the licence; stamping the
 //     shared chunks as well would repeat it three times for nobody's benefit,
 //     and the text barely compresses — it is close to its own weight in gzip.
+// The URL keeps the old repository name until the repository itself is renamed;
+// GitHub redirects it permanently either way, so this line is correct before
+// and after. See _Name_ in the README.
 const NOTICE =
-  '/*! qr-school | MIT | Copyright (c) 2026 Thibaut Etienne | https://github.com/tetienne/qr-school */';
+  '/*! Zou | MIT | Copyright (c) 2026 Thibaut Etienne | https://github.com/tetienne/qr-school */';
 
 const legalNotice = (): Plugin => ({
   name: 'legal-notice',

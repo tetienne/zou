@@ -22,6 +22,9 @@ const supportsDirectories = supportsFolders();
 
 // --- Browser storage --------------------------------------------------------
 
+// The old name, kept on purpose — see the note in labels.ts. `names` is the
+// very key the labels page writes, which is how the class list reaches the
+// autocompletion here.
 const NAMES_STORAGE_KEY = 'qr-school.names';
 const SIZE_STORAGE_KEY = 'qr-school.size';
 
