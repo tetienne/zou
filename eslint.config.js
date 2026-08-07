@@ -26,7 +26,7 @@ const HTML_FORMATTING_RULES = Object.fromEntries(
 );
 
 export default tseslint.config(
-  { ignores: ['dist/', 'node_modules/', 'coverage/'] },
+  { ignores: ['dist/', 'node_modules/', 'coverage/', 'test-results/', 'playwright-report/'] },
 
   // --- Application TypeScript ----------------------------------------------
   {
@@ -73,6 +73,17 @@ export default tseslint.config(
       'vitest/no-focused-tests': 'error',
       'vitest/no-disabled-tests': 'warn',
       'vitest/no-identical-title': 'error',
+    },
+  },
+
+  // --- Browser tests -------------------------------------------------------
+  {
+    files: ['tests/**/*.ts'],
+    rules: {
+      // Playwright hands work to the page as strings evaluated over there, so
+      // the DOM types it returns cannot be inferred from this side.
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
     },
   },
 
