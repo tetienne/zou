@@ -187,10 +187,9 @@ refreshKnownNames();
 
 if (!supportsDirectories) {
   showWarning(
-    'Ce navigateur ne sait pas écrire directement dans un dossier. Les photos renommées ' +
-      'arriveront une par une dans votre dossier « Téléchargements ». Pour un rangement ' +
-      'automatique, ouvrez cette page avec une version à jour de Google Chrome ou de ' +
-      'Microsoft Edge. Brave bloque cette fonction, bien qu’il repose sur Chrome.',
+    'Ce navigateur ne sait pas ranger les photos dans un dossier. Elles arriveront ' +
+      'renommées, une par une, dans le dossier « Téléchargements », sans sous-dossier par ' +
+      'prénom. Sur un ordinateur, vous pouvez utiliser Microsoft Edge ou Google Chrome, par exemple.',
   );
   el.chooseDestination.disabled = true;
   el.destinationName.textContent = 'dossier « Téléchargements »';
