@@ -478,10 +478,41 @@ after any change to the size of a label.
 
 ## License
 
-[MIT](LICENSE) — copy it, adapt it for another class, no questions asked. The
-point of the project is that a colleague can fork it and change the labels; a
-copyleft licence would only stand in the way of that, and there is no service
-to protect since everything runs in the teacher's browser.
+[MIT](LICENSE). Fork it, adapt it for another class, host it wherever — under
+one condition, which is the whole of the licence's operative sentence:
+
+> The above copyright notice and this permission notice shall be included in all
+> copies or substantial portions of the Software.
+
+In other words: keep the credit. That is what MIT buys, and it is not a
+formality — a fork that drops `LICENSE` is in breach of it.
+
+So the notice is made hard to lose by accident, in three places at once:
+
+| Where                                | Reaches                                 |
+| ------------------------------------ | --------------------------------------- |
+| `LICENSE`                            | whoever clones the repository           |
+| a banner on each entry chunk         | whoever copies `dist/` onto own hosting |
+| the _Code source_ link in the footer | whoever only ever sees the page         |
+
+The middle one needs a plugin, for a reason worth knowing before touching the
+build: `rollupOptions.output.banner` is applied _before_ Vite minifies, and Vite
+runs esbuild with `legalComments: 'none'`, which deletes even a `/*!` comment.
+`legalNotice()` in `vite.config.ts` therefore stamps the chunks in
+`generateBundle`, after every `renderChunk` has run. It marks entry chunks only —
+one notice per page discharges the licence, and the text is close to
+incompressible, so repeating it in the shared chunks would cost real bytes for
+nothing. As it stands it costs 0.07 kB gzipped per page.
+
+**Why not a licence built around attribution?** CC-BY is not meant for software
+and Creative Commons says so itself. Apache-2.0 spells the duty out at greater
+length and adds a patent grant, which is worth its 200 lines for a library with
+corporate users and is pure ceremony for a label printer. MIT already requires
+the credit in twenty lines everyone recognises.
+
+**Why not copyleft?** The AGPL protects a hosted service, and there is none —
+everything runs in the teacher's browser. On a few hundred lines of static page,
+the GPL would only deter the reuse the project exists for.
 
 Two dependencies ship inside the built site and keep their own terms:
 
