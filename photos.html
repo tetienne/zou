@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ranger les photos — Photos d'élèves</title>
+    <link rel="icon" href="favicon.svg" />
+    <script type="module" src="/src/photos.ts"></script>
+  </head>
+  <body class="px-4 pb-16">
+    <header class="mx-auto max-w-5xl border-b-2 border-slate-300 pt-6 pb-4">
+      <p class="text-[0.8rem] font-semibold tracking-widest text-slate-500 uppercase">Photos d'élèves</p>
+      <h1 class="mt-1 text-2xl font-bold">Ranger les photos</h1>
+      <p class="mt-1 text-slate-500">
+        Les photos sont copiées et renommées. Les originaux ne sont jamais modifiés ni supprimés.
+      </p>
+      <a class="mt-3 inline-block text-blue-700 hover:underline" href="index.html">← Retour à l'accueil</a>
+    </header>
+
+    <main class="mx-auto max-w-5xl pt-4">
+      <div id="warning" role="status"></div>
+
+      <section class="step">
+        <h2 class="mb-3 text-xl font-semibold">1. Les photos à ranger</h2>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" id="choose-source" class="button">Choisir le dossier des photos</button>
+          <span class="font-mono text-[0.95rem] text-slate-500" id="source-name">aucun dossier choisi</span>
+        </div>
+      </section>
+
+      <section class="step">
+        <h2 class="mb-3 text-xl font-semibold">2. Où les ranger</h2>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" id="choose-destination" class="button">Choisir le dossier de destination</button>
+          <span class="font-mono text-[0.95rem] text-slate-500" id="destination-name">aucun dossier choisi</span>
+        </div>
+        <label class="mt-3 block">
+          <input type="checkbox" id="subfolders" checked class="align-middle" />
+          Créer un sous-dossier par prénom
+        </label>
+        <label class="mt-2 block" for="pattern">
+          Nom des fichiers :
+          <select id="pattern" class="field">
+            <option value="name_date_num">Léa_2026-06-14_01.jpg</option>
+            <option value="name_num">Léa_01.jpg</option>
+            <option value="date_name_num">2026-06-14_Léa_01.jpg</option>
+          </select>
+        </label>
+        <p class="hint mt-2">La date est celle de la photo (date du fichier).</p>
+      </section>
+
+      <section class="step">
+        <h2 class="mb-3 text-xl font-semibold">3. Lire les QR codes</h2>
+        <button type="button" id="scan" class="button" disabled>Analyser les photos</button>
+        <progress id="scan-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
+        <p class="hint mt-2" id="scan-status" role="status"></p>
+      </section>
+
+      <section class="step" id="results-block" hidden>
+        <h2 class="mb-1 text-xl font-semibold">4. Vérifier et copier</h2>
+        <p class="hint mb-4">
+          Sous chaque photo : le prénom, le nom que le fichier va prendre, et où il en est. Vous pouvez corriger un
+          prénom en cliquant dessus. Une photo sans prénom n'est pas copiée.
+        </p>
+
+        <div id="needs-attention" class="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-3" hidden>
+          <p class="flex items-start gap-2 text-[1.05rem] font-semibold text-amber-900">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              class="mt-0.5 size-5 shrink-0"
+            >
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+            <span id="needs-attention-text"></span>
+          </p>
+          <p class="mt-1 text-[0.95rem] text-amber-900">
+            Elles sont placées au début de la galerie ci-dessous. Écrivez le prénom : la photo rejoint aussitôt les
+            autres.
+          </p>
+        </div>
+
+        <p
+          id="all-ready"
+          class="mb-4 flex items-center gap-2 rounded-xl border-2 border-green-700 bg-green-50 px-4 py-3 font-semibold text-green-900"
+          hidden
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            class="size-5 shrink-0"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+          Toutes les photos ont un prénom.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" id="copy" class="button" disabled>Copier les photos</button>
+          <span id="copy-status" class="hint" role="status"></span>
+        </div>
+        <progress id="copy-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
+
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
+          <p id="summary" class="hint"></p>
+          <fieldset class="flex flex-wrap items-center gap-2">
+            <legend class="sr-only">Taille des photos</legend>
+            <span class="hint">Taille des photos :</span>
+            <div class="inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white">
+              <label class="border-r border-slate-300">
+                <input type="radio" name="size" value="small" class="peer sr-only" />
+                <span
+                  class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
+                  >Petites</span
+                >
+              </label>
+              <label class="border-r border-slate-300">
+                <input type="radio" name="size" value="medium" class="peer sr-only" checked />
+                <span
+                  class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
+                  >Moyennes</span
+                >
+              </label>
+              <label>
+                <input type="radio" name="size" value="large" class="peer sr-only" />
+                <span
+                  class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
+                  >Grandes</span
+                >
+              </label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div id="results" class="gallery gallery-medium"></div>
+
+        <!--
+          Class list offered as autocompletion under each field. `<datalist>` is
+          not classified "widely available" by baseline, but degrading is
+          painless: without it the field stays a free-text input, which is
+          exactly the intended fallback.
+        -->
+        <!-- eslint-disable @html-eslint/use-baseline -->
+        <datalist id="known-names"></datalist>
+        <!-- eslint-enable @html-eslint/use-baseline -->
+      </section>
+    </main>
+
+    <footer
+      class="mx-auto mt-10 flex max-w-5xl items-center gap-4 border-t border-slate-200 pt-4 text-[0.9rem] text-slate-500"
+    >
+      <a
+        class="inline-flex items-center gap-2 text-slate-500 hover:text-blue-700 hover:underline"
+        href="https://github.com/tetienne/qr-school/"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4">
+          <path
+            d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.4-1.27.73-1.56-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
+          ></path>
+        </svg>
+        Code source de l'application
+      </a>
+    </footer>
+
+    <!--
+      Fallback for browsers without folder access: this field is hidden and
+      triggered by the « Choisir le dossier des photos » button.
+      `webkitdirectory` is non-standard, but it is the only way to make Firefox
+      and Safari offer a whole folder.
+    -->
+    <!-- eslint-disable @html-eslint/use-baseline -->
+    <input
+      type="file"
+      id="fallback-source"
+      webkitdirectory
+      multiple
+      accept="image/*"
+      hidden
+      aria-label="Dossier contenant les photos à ranger"
+    />
+    <!-- eslint-enable @html-eslint/use-baseline -->
+  </body>
+</html>

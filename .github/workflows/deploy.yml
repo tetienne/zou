@@ -1,0 +1,91 @@
+name: Verify and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time, without cancelling the one in flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # Quality and verification run in parallel: a style error must not mask a
+  # broken test, nor the other way round.
+  quality:
+    name: Format and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Formatting (Prettier)
+        run: npm run format:check
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+  verify:
+    name: Types, tests and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build the site
+        run: npm run build
+        env:
+          # GitHub Pages serves the site under /<repository-name>/.
+          VITE_BASE: /${{ github.event.repository.name }}/
+
+      - name: Prepare the Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Publish
+    needs: [quality, verify]
+    # Anything but a pull request publishes: that means a push to one of the
+    # branches listed under `on.push.branches`, or a manual run. Keeping the
+    # branch list in one place avoids a second copy of it here.
+    #
+    # There is only one Pages site, so publishing a branch REPLACES what is
+    # online. GitHub gates this separately: the github-pages environment only
+    # accepts the default branch until the branch is allowed under
+    # Settings → Environments → github-pages → Deployment branches.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

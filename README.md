@@ -1,1 +1,334 @@
-# qr-school
+# qr-school — filing pupils' artwork photos by QR code
+
+A small web app that automatically files photos of pupils' work. The teacher
+puts a QR label carrying the child's first name next to the work, photographs
+the two together, and the app reads the QR code back to copy each photo as
+`Prénom_date_numéro.jpg` into a per-child subfolder.
+
+**Nothing to install. No command line. Nothing leaves the computer: all the
+processing happens in the browser.**
+
+The interface is in French because the user is a French primary school teacher.
+Everything else — code, identifiers, comments, tests, this file — is in English.
+
+---
+
+## Why a web page rather than Python or Go
+
+The binding constraint is "one teacher, one Windows PC, no command line". That
+is what picks the technology:
+
+|               | Python                                                | Go                      | **Static page (TypeScript)**                |
+| ------------- | ----------------------------------------------------- | ----------------------- | ------------------------------------------- |
+| Installation  | Python plus deps, or a 60–150 MB PyInstaller `.exe`   | a ~10 MB `.exe` to copy | **nothing, a bookmark**                     |
+| Launching     | double-click an `.exe` → SmartScreen / antivirus warn | same                    | **click the bookmark**                      |
+| Updating      | ship a new `.exe` for every fix                       | same                    | **`git push`, she reloads the page**        |
+| Hosting       | —                                                     | —                       | **GitHub Pages, free**                      |
+| QR decoding   | pyzbar / OpenCV                                       | gozxing                 | zxing-wasm (WebAssembly build of zxing-cpp) |
+| Writing files | unrestricted                                          | unrestricted            | folder the user picks (Edge / Chrome)       |
+
+The only real advantage of Python or Go would be unrestricted disk access — and
+Chromium has been able to do that since 2021 through the **File System Access**
+API: the user picks a folder and the browser writes into it. That is exactly
+what is needed here, with no local server and no executable to get past the
+school's antivirus.
+
+Two points settled it:
+
+- **No OCR.** The first name is not read off the label, it is _inside_ the QR
+  code. The most fragile part of the project disappears entirely — no Tesseract,
+  no vision model.
+- **No maintenance on the machine.** No executable to redeploy, no stale version
+  sitting on the classroom PC.
+
+**When should this be revisited?** If HEIC photos (iPhone) have to be handled,
+or thousands of photos at a time, or the machine is locked down to Firefox, then
+a single Go binary serving the same interface on `localhost` becomes the right
+plan B. Most of this code would carry over.
+
+---
+
+## Deployment (once)
+
+1. Push this repository to GitHub.
+2. `Settings` → `Pages` → _Source_: **GitHub Actions**.
+3. `.github/workflows/deploy.yml` does the rest: on every push to `main` it
+   checks types, runs the tests, builds the site and publishes it. Pull requests
+   run the same checks without deploying.
+4. A minute later the site is at `https://<user>.github.io/qr-school/`.
+5. Send that address to the teacher and have her bookmark it on the desktop.
+
+The base path is derived from the repository name (`VITE_BASE`); locally
+`npm run dev` serves from the root. HTTPS is mandatory — the folder access API
+does not work over `file://` — and GitHub Pages provides it out of the box.
+
+### Trying a branch on the real site, without merging
+
+In the **Actions** tab: _Verify and deploy_ → _Run workflow_ → pick the branch.
+The deploy job runs for anything that is not a pull request, so a manual run
+publishes whatever branch you select. Pull requests never deploy on their own.
+
+Two things to know before doing it:
+
+- There is a **single Pages site**, so publishing a branch replaces whatever is
+  online — including for the teacher, once she has the address.
+- GitHub gates it independently of the workflow: the `github-pages` environment
+  only accepts the default branch until the branch is allowed under
+  `Settings` → `Environments` → `github-pages` → _Deployment branches and tags_.
+  Without that the job fails with "Branch is not allowed to deploy to
+  github-pages".
+
+One trap worth remembering, because it cost a detour: the _Run workflow_ button
+only appears for workflows that **already exist on the default branch**, and the
+REST endpoint behaves the same. While this workflow lived only on a feature
+branch there was no way to trigger it, and the branch had to be added to
+`on.push.branches` instead. That is no longer necessary now the workflow is on
+`main`.
+
+To check the base path without GitHub at all, build with it and serve the result
+from a matching subfolder:
+
+```bash
+VITE_BASE=/qr-school/ npm run build
+mkdir -p /tmp/pages/qr-school && cp -r dist/* /tmp/pages/qr-school/
+python3 -m http.server 8080 --directory /tmp/pages
+# then open http://localhost:8080/qr-school/
+```
+
+`http://localhost` counts as a secure context, so the folder picker works there
+just as it does over HTTPS.
+
+---
+
+## How the teacher uses it
+
+### 1. Print the labels (once a year)
+
+**Créer les étiquettes** page: type the first names one per line, choose how
+many labels per child, click _Générer_ then _Imprimer_.
+
+Each label carries the QR code and the first name in plain text — handy for
+handing them out, and for checking by eye that the right label sits next to the
+right piece of work. The list is remembered in the browser.
+
+If there are two `Léa` in the class, write `Léa B` and `Léa M`.
+
+### 2. Take the photos
+
+Put the label next to the work and shoot. The label must be fully visible and
+take up a reasonable share of the frame — as a rule of thumb the QR should not
+be narrower than a twentieth of the photo. A tilt of 15–40° is fine; see the
+decoder section for the measured limits.
+
+### 3. File the photos
+
+**Ranger les photos** page:
+
+1. _Choisir le dossier des photos_ → the SD card or phone folder.
+2. _Choisir le dossier de destination_ → e.g. `Documents\Travaux 2026`.
+3. _Analyser les photos_ → every QR code is read, then a gallery appears: one
+   card per photo with the image, the first name found, the name the file will
+   take and its status.
+4. Fix the missing first names. Those photos **move to the front of the gallery**
+   and carry a thick border: they are the only ones asking for anything. A
+   banner gives the count. As soon as a name is typed, the card rejoins the rest.
+5. _Copier les photos_.
+
+The first name field offers the class list as autocompletion, taken from the
+labels page. Thumbnail size is adjustable — Petites, Moyennes, Grandes — and the
+choice is remembered.
+
+Original photos are **never modified or deleted**, only copied. Filing the same
+folder twice overwrites nothing: numbering continues. Note that it follows the
+order of the photos, not the order they are displayed in — a card moved to the
+front keeps the number matching its place in the folder.
+
+---
+
+## Browsers
+
+| Browser                                 | Result                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------------------------- |
+| Microsoft Edge, Google Chrome (Windows) | everything works, files written straight into the chosen folder                       |
+| Firefox, Safari                         | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
+
+Edge ships with Windows, so that is the one to recommend.
+
+---
+
+## Development
+
+```bash
+npm install
+npm run dev           # local server with hot reload
+npm run verify        # the whole chain, same as CI
+npm run format        # apply Prettier
+npm run format:check  # check without writing
+npm run lint          # ESLint
+npm run lint:fix      # ESLint with autofixes
+npm run typecheck     # tsc --noEmit, strict
+npm test              # unit tests (Vitest)
+npm run build         # static site into dist/
+npm run preview       # serve dist/ to check the build
+```
+
+TypeScript in strict mode (including `noUncheckedIndexedAccess`), Tailwind CSS 4
+through its Vite plugin, no UI framework: the DOM is driven directly and the app
+fits in a few hundred lines.
+
+| File                             | Role                                                    |
+| -------------------------------- | ------------------------------------------------------- |
+| `src/names.ts`                   | first names, extensions, output file names — DOM-free   |
+| `src/filing.ts`                  | numbering and free-name lookup — no DOM, no disk        |
+| `src/qr-decoding.ts`             | decoding a QR code — DOM-free, tested without a browser |
+| `src/qr-generation.ts`           | generating the label QR codes                           |
+| `src/photo-reading.ts`           | reading a photo: its QR code and its thumbnail          |
+| `src/dom.ts`                     | element lookup with a runtime type check                |
+| `src/photos.ts`, `src/labels.ts` | interface wiring                                        |
+
+Business logic is deliberately kept away from the DOM: `names.ts` and `filing.ts`
+are tested without a browser, and `filing.ts` only touches the disk through an
+`exists` predicate that tests replace.
+
+## Language convention
+
+Code is English, the interface is French. Concretely:
+
+- identifiers, comments, commit messages, test names, HTML `id`s and CSS class
+  names are English;
+- every string the teacher can read stays French — page copy, button labels,
+  `aria-label`s, placeholders, status messages, and the `Sans-nom` fallback that
+  ends up in a file name;
+- French is kept where it is behaviour rather than prose: `<html lang="fr">`,
+  `localeCompare(…, 'fr')`, and the French keys `extractFirstName` accepts
+  (`prenom=`, `nom=`) because that is what a French label generator would emit.
+
+## Recognition libraries
+
+**There is no first-name recognition.** The name is not _read_ from the label,
+it is _carried_ by the QR code. No OCR, no Tesseract, no vision model — that is
+what makes the project reliable. The fallback when reading fails is not a second
+algorithm: the teacher types the name on the card, helped by autocompletion from
+the class list.
+
+### The decoder: zxing-wasm, and why not the popular ones
+
+One decoder, [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) — the
+WebAssembly build of [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp). It
+reads the photo file in a single full-resolution pass: no downscaling, no tiling,
+no native detector to try first.
+
+This goes against popularity, and it was measured. Four decoders were run over
+the same 22 photos, built by 3D projection of the label followed by an inverse
+homography — real perspective images, not mere rotations:
+
+| Decoder                                               | Decoded     | Total time | Tilt            |
+| ----------------------------------------------------- | ----------- | ---------- | --------------- |
+| [jsQR](https://github.com/cozmo/jsQR)                 | 7 / 22      | 33.9 s     | fails from 15°  |
+| [@zxing/library](https://github.com/zxing-js/library) | 7 / 22      | 19.9 s     | fails from 15°  |
+| [qr-scanner](https://github.com/nimiq/qr-scanner)     | 6 / 22      | 23.0 s     | fails from 15°  |
+| **zxing-wasm**                                        | **17 / 22** | **2.4 s**  | holds up to 45° |
+
+The three pure-JavaScript options fail in the same place because they are the
+same engine: `qr-scanner` forks the jsQR port, itself a port of the old Java
+ZXing, of which `@zxing/library` is the other port. They all inherit the same
+grid extraction, which cannot rectify perspective. A hand-held photo is almost
+always tilted by 15–40°, so that is the normal case, not the edge case.
+
+`BarcodeDetector`, the browser's built-in API, was **deliberately dropped**. It
+is still experimental and its availability depends on the operating system, so
+it introduced a code path whose behaviour varied per machine — impossible to
+reproduce when troubleshooting remotely — for no gain against zxing-wasm's
+100 ms.
+
+The price is weight: ~450 kB gzipped of WebAssembly against 52 kB for jsQR.
+Loaded once, cached by the browser, on a tool used once a week from a desktop.
+
+On maintenance risk: `zxing-wasm` is a thin wrapper, the decoder is `zxing-cpp`,
+pinned as a submodule at a specific commit (the package exports it as
+`ZXING_CPP_COMMIT`). If the wrapper were abandoned, the `.wasm` stays frozen in
+the lockfile and bundled as a local asset: nothing to recover, no remote
+service. That is a very different risk profile from an abandoned decoder, which
+would never catch up.
+
+### Generation
+
+[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (2.0, MIT,
+~20 kB), with `stringToBytes` forced to UTF-8 — otherwise version 2 encodes as
+latin-1 and « Léa » comes back as mojibake. Error correction level _M_: a label
+that is slightly damaged or poorly lit still scans.
+
+Other points:
+
+- EXIF orientation is honoured (`imageOrientation: 'from-image'`), so portrait
+  photos are read correctly.
+- Characters Windows forbids (`< > : " / \ | ? *`) are stripped from file names;
+  accents and hyphens are kept.
+- Each page loads only what it needs: the label sheet does not download the
+  decoder, and vice versa.
+- No CDN: everything is bundled by Vite.
+
+## Code quality
+
+**ESLint 10** in flat config, with responsibilities split as follows:
+
+| Scope              | Configuration                                                       |
+| ------------------ | ------------------------------------------------------------------- |
+| `src/**/*.ts`      | `typescript-eslint` in `strictTypeChecked` + `stylisticTypeChecked` |
+| `src/**/*.test.ts` | plus `@vitest/eslint-plugin`                                        |
+| `*.html`           | `@html-eslint`, mostly for accessibility                            |
+
+The type-aware rules are the real value: they need the TypeScript program
+(`projectService: true`) and catch what a syntax-only linter misses —
+`no-floating-promises` on a promise dropped in an event handler,
+`no-unnecessary-condition` on a guard that has become dead.
+
+On the HTML side the rules kept are the ones that protect the user:
+`require-input-label`, `require-img-alt`, `require-button-type`,
+`no-positive-tabindex`, `no-duplicate-id`, `use-baseline`.
+
+**Prettier 3** with `prettier-plugin-tailwindcss`, which sorts the utility
+classes in framework order — without it they drift into an unreadable mess.
+Prettier is the **sole** owner of formatting: `eslint-config-prettier` disables
+the competing TypeScript rules, and an explicit list does the same for
+`@html-eslint`, which `eslint-config-prettier` does not cover.
+
+TypeScript is deliberately pinned to **6.0.x**: `typescript-eslint` 8 declares
+`typescript@<6.1.0` as a peer and therefore refuses TypeScript 7. Bump it when
+upstream catches up.
+
+## Tests
+
+`npm test` covers, without a browser:
+
+- first names and output file names (accents, forbidden characters, patterns);
+- numbering, including a second pass over the same photos, which must continue
+  at `_03` instead of overwriting `_01`;
+- **decoder robustness** on synthetic but realistic photos: the QR code is
+  generated by the very function the labels page uses, then projected in 3D and
+  rendered through an inverse homography with bilinear sampling. Covered: tilt up
+  to 45° on one axis and 35° on two, in-plane rotation, tilt combined with
+  rotation, and a label shrunk to 150 px inside a 3000 × 2000 photo.
+
+Projecting the label rather than rotating it is not a detail: the first version
+of these tests used perfectly square QR codes, and therefore let through the one
+degradation the decoder of the time could not handle.
+
+One test also pins an **accepted limit** — beyond a 60° tilt nothing is decoded.
+If it ever starts passing, that is good news to notice, not a regression.
+
+What the tests do not cover, and has to be checked by hand: the native Windows
+folder picker, and real camera photos.
+
+## Known limitations
+
+- **HEIC/HEIF** files (the iPhone default) cannot be decoded by the browser;
+  they are listed and flagged as such. Set the iPhone to "Most Compatible"
+  (JPEG), or convert beforehand.
+- Only one QR code per photo is used (the first one found).
+- Correcting a first name after the copy re-copies the photo under the new name,
+  but the earlier copy stays on disk — there is no undo in the interface.
+- Moving instead of copying is deliberately not offered.
+- The chosen folders are not remembered between sessions.
+- The native folder picker cannot be driven by an automated test: that part is
+  only verified by hand.
