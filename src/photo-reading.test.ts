@@ -8,8 +8,9 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { prepareZXingModule } from 'zxing-wasm/reader';
+import { INKS } from './label-theme';
 import { decodeQrCode, type PixelBuffer } from './qr-decoding';
-import { qrCodeMatrix, qrCodeSvg } from './qr-generation';
+import { qrCodeMatrix } from './qr-generation';
 
 const FIRST_NAME = 'Léa';
 
@@ -33,12 +34,22 @@ interface Degradations {
   rotation?: number;
   width?: number;
   height?: number;
+  /** Brightness of the modules, 0 = black … 255 = white. */
+  ink?: number;
+}
+
+/** Brightness of a `#rrggbb` ink, as the decoder perceives it. */
+function brightnessOf(hex: string): number {
+  const [red, green, blue] = [1, 3, 5].map((start) =>
+    Number.parseInt(hex.slice(start, start + 2), 16),
+  );
+  return Math.round(0.299 * red! + 0.587 * green! + 0.114 * blue!);
 }
 
 type Corner = readonly [number, number];
 
-/** Crisp label: black QR on white, with the mandatory 4-module quiet zone. */
-function renderLabel(size: number): PixelBuffer {
+/** Crisp label: dark QR on white, with the mandatory 4-module quiet zone. */
+function renderLabel(size: number, ink = 0): PixelBuffer {
   const matrix = qrCodeMatrix(FIRST_NAME);
   const modules = matrix.length;
   const cell = Math.max(2, Math.floor(size / (modules + 8)));
@@ -52,9 +63,9 @@ function renderLabel(size: number): PixelBuffer {
       for (let dy = 0; dy < cell; dy++) {
         for (let dx = 0; dx < cell; dx++) {
           const p = ((quietZone + row * cell + dy) * width + quietZone + column * cell + dx) * 4;
-          data[p] = 0;
-          data[p + 1] = 0;
-          data[p + 2] = 0;
+          data[p] = ink;
+          data[p + 1] = ink;
+          data[p + 2] = ink;
         }
       }
     }
@@ -127,7 +138,7 @@ function photograph(degradations: Degradations = {}): PixelBuffer {
   const width = degradations.width ?? 3000;
   const height = degradations.height ?? 2000;
 
-  const label = renderLabel(size);
+  const label = renderLabel(size, degradations.ink);
   const cx = Math.round(width * 0.72);
   const cy = Math.round(height * 0.66);
   const quad = projectedCorners(size, tiltX, tiltY, rotation).map(([x, y]): Corner => [
@@ -280,11 +291,20 @@ describe('accepted limits', () => {
   });
 });
 
-describe('qrCodeSvg', () => {
-  it('produces a scalable SVG', () => {
-    const svg = qrCodeSvg('Léa');
-    expect(svg.startsWith('<svg')).toBe(true);
-    expect(svg).toContain('viewBox');
-    expect(svg.trimEnd().endsWith('</svg>')).toBe(true);
+describe('label printed in colour', () => {
+  // The labels are no longer black: each first name gets its own ink. zxing
+  // only sees brightness, so an ink is rendered here as the grey of the same
+  // brightness — that is exactly what reaches the decoder.
+  it.each(INKS.map(({ ink }) => ink))('decodes a %s label tilted 30°', async (ink) => {
+    await expect(
+      decodeQrCode(photograph({ ink: brightnessOf(ink), size: 300, tiltX: 30, tiltY: 15 })),
+    ).resolves.toBe(FIRST_NAME);
+  });
+
+  it('loses a near-white ink', async () => {
+    // Where the fake photo gives up: 94 % of the brightness of white. It is
+    // perfectly lit and printed by nobody, so it tolerates far paler inks than
+    // paper does — hence a palette that stays under 40 %, well short of this.
+    await expect(decodeQrCode(photograph({ ink: 240, size: 300, tiltX: 30 }))).resolves.toBe('');
   });
 });

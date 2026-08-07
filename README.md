@@ -111,6 +111,14 @@ Each label carries the QR code and the first name in plain text — handy for
 handing them out, and for checking by eye that the right label sits next to the
 right piece of work. The list is remembered in the browser.
 
+Each first name also gets a colour and a small mascot, both derived from the
+name itself: a child who cannot read yet still finds "the orange label with the
+fox", and the same child gets the same label again next term. The palette is
+deliberately dark — zxing thresholds on brightness, so a pastel code would stop
+being read; `photo-reading.test.ts` photographs every colour of the palette and
+checks it decodes. _Étiquettes en couleur_ can be unticked to print in plain
+black.
+
 If there are two `Léa` in the class, write `Léa B` and `Léa M`.
 
 ### 2. Take the photos
@@ -182,6 +190,7 @@ fits in a few hundred lines.
 | `src/filing.ts`                  | numbering and free-name lookup — no DOM, no disk        |
 | `src/qr-decoding.ts`             | decoding a QR code — DOM-free, tested without a browser |
 | `src/qr-generation.ts`           | generating the label QR codes                           |
+| `src/label-theme.ts`             | colour and mascot of a label — DOM-free                 |
 | `src/photo-reading.ts`           | reading a photo: its QR code and its thumbnail          |
 | `src/dom.ts`                     | element lookup with a runtime type check                |
 | `src/photos.ts`, `src/labels.ts` | interface wiring                                        |
