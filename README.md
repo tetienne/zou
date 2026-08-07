@@ -20,21 +20,33 @@ short enough to say out loud. It sits in the small caps line above each heading,
 where `Photos d'élèves` used to describe the app to someone who could already read
 the description underneath.
 
-Three things deliberately keep the old name `qr-school`, and none of them is an
+Two things deliberately keep the old name `qr-school`, and neither is an
 oversight:
 
 - **The `localStorage` keys** (`qr-school.names`, `qr-school.label-options`,
   `qr-school.size`). They identify data already sitting in the teacher's browser.
   Renaming them empties her class list and resets the sheet style, with nothing on
   screen to explain why — a rename with a silent cost, for cosmetic gain.
-- **The GitHub links** in the three footers and in the build notice. GitHub
-  redirects a renamed repository permanently, so the old URL is right both before
-  and after; the new one would 404 until the day the rename happens.
-- **The repository, so far.** Renaming it is one setting and needs no code
-  change — `deploy.yml` derives `VITE_BASE` from
-  `github.event.repository.name` — but it moves the site to
-  `https://<user>.github.io/zou/`, and the old path does not follow. The teacher's
-  bookmark has to be sent again. That, not the code, is what makes it a decision.
+- **The URL in the MIT notice.** That one is attribution: it names the author's
+  repository, so it stays put even inside a fork's own build, and GitHub's
+  permanent redirect carries it through a rename.
+
+**The footer link is generated instead**, because it answers the other question —
+where does the page in front of me come from? GitHub Actions sets
+`GITHUB_REPOSITORY` and `GITHUB_SERVER_URL` for every step of every job, so
+`sourceLink()` in `vite.config.ts` fills `%SOURCE_URL%` in the three pages from
+the environment, falling back to the upstream address for `npm run dev` and local
+builds. Two things follow for free: renaming the repository moves the link with
+it, and a fork's pages link to the fork instead of crediting this repository for
+someone else's changes. Vite's own `%VITE_*%` substitution would not do — it reads
+`.env` files, and an unset variable is served as a literal `%VITE_SOURCE_URL%`
+inside an `href`.
+
+Which leaves **the repository itself**. Renaming it is one setting and needs no
+code change — `deploy.yml` derives `VITE_BASE` from
+`github.event.repository.name` — but it moves the site to
+`https://<user>.github.io/zou/`, and the old path does not follow. The teacher's
+bookmark has to be sent again. That, not the code, is what makes it a decision.
 
 ---
 
