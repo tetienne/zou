@@ -170,7 +170,9 @@ decoder section for the measured limits.
 2. _Choisir le dossier de destination_ → e.g. `Documents\Travaux 2026`.
 3. _Analyser les photos_ → every QR code is read, then a gallery appears: one
    card per photo with the image, the first name found, the name the file will
-   take and its status.
+   take and its status. The reading is spread over the machine's cores, so the
+   page keeps answering while a folder goes through — see _Reading a folder_
+   below.
 4. Fix the missing first names. Those photos **move to the front of the gallery**
    and carry a thick border: they are the only ones asking for anything. A
    banner gives the count. As soon as a name is typed, the card rejoins the rest.
@@ -237,7 +239,9 @@ fits in a few hundred lines.
 | `src/qr-generation.ts`           | generating the label QR codes                            |
 | `src/label-theme.ts`             | palettes, drawings and label options — DOM-free          |
 | `src/label-layout.ts`            | sheet geometry and pagination in mm — DOM-free           |
-| `src/photo-reading.ts`           | reading a photo: its QR code and its thumbnail           |
+| `src/photo-reading.ts`           | reading one photo: its QR code and its thumbnail         |
+| `src/photo-scanning.ts`          | reading a folder: the pool of workers                    |
+| `src/scan-worker.ts`             | one photo at a time, off the page's thread               |
 | `src/dom.ts`                     | element lookup with a runtime type check                 |
 | `src/folder-access.ts`           | File System Access types, and whether the browser has it |
 | `src/photos.ts`, `src/labels.ts` | interface wiring                                         |
@@ -245,6 +249,38 @@ fits in a few hundred lines.
 Business logic is deliberately kept away from the DOM: `names.ts` and `filing.ts`
 are tested without a browser, and `filing.ts` only touches the disk through an
 `exists` predicate that tests replace.
+
+### Reading a folder
+
+Reading a photo is the only slow thing the app does: zxing needs the full
+resolution to recover a tilted label, and that costs a few hundred milliseconds
+per 12 Mpx photo. A term's folder is a few hundred of them, so doing it one at a
+time on the page's own thread meant minutes of a frozen interface.
+
+`photo-scanning.ts` therefore keeps one worker per core, minus one for the page.
+Measured in Chromium on four cores, 24 photos of 4000 × 3000, five runs each:
+
+|                      | one at a time (before) | pool of workers |
+| -------------------- | ---------------------- | --------------- |
+| whole folder         | 5.0 – 6.5 s            | **2.7 – 3.4 s** |
+| longest frozen frame | 283 – 350 ms           | **17 – 33 ms**  |
+
+The interface never drops a frame now, which matters more than the stopwatch:
+the progress bar used to stutter and the gallery froze between photos.
+
+Two things the pool has to get right:
+
+- **Order.** Workers finish in whatever order they please, but a photo is only
+  handed to the page once every photo before it has been. Numbering follows the
+  order of the folder, not the order the decoder happened to finish in, so
+  `Léa_01` is always the first of Léa's photos on the card.
+- **Falling back.** A browser without `Worker` — or one that refuses module
+  workers — reads the photos on the page's thread instead. That is exactly the
+  old behaviour, and it was measured to confirm it: 5.0 – 5.4 s, the old speed.
+
+Thumbnails cross back as JPEG blobs rather than data URLs: no base64 copy on the
+way out of the worker, a third of the memory, and the page owns the object URL
+and releases it when the gallery is rebuilt.
 
 ## Language convention
 
@@ -379,7 +415,9 @@ One test also pins an **accepted limit** — beyond a 60° tilt nothing is decod
 If it ever starts passing, that is good news to notice, not a regression.
 
 What the tests do not cover, and has to be checked by hand: the native Windows
-folder picker, and real camera photos.
+folder picker, real camera photos, and the worker pool — `scan-worker.ts` and
+`photo-scanning.ts` need a browser, so they are verified by running a folder
+through both builds and comparing, not by `npm test`.
 
 The printed sheet itself was checked outside the test suite, by driving Chromium
 headlessly (`page.pdf`) over the three sizes and reading the result back: the
