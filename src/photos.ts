@@ -171,7 +171,7 @@ if (!supportsDirectories) {
   showWarning(
     'Ce navigateur ne sait pas écrire directement dans un dossier. Les photos renommées ' +
       'arriveront une par une dans votre dossier « Téléchargements ». Pour un rangement ' +
-      'automatique, utilisez Microsoft Edge ou Google Chrome.',
+      'automatique, utilisez Vivaldi, Brave, Google Chrome ou Microsoft Edge.',
   );
   el.chooseDestination.disabled = true;
   el.destinationName.textContent = 'dossier « Téléchargements »';

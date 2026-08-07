@@ -171,17 +171,21 @@ front keeps the number matching its place in the folder.
 
 | Browser                                                   | Result                                                                                |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Any Chromium browser: Edge, Chrome, Vivaldi, Brave, Opera | everything works, files written straight into the chosen folder                       |
+| Any Chromium browser: Vivaldi, Brave, Chrome, Edge, Opera | everything works, files written straight into the chosen folder                       |
 | Firefox, Safari                                           | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
 
-Edge ships with Windows, so that is the one to recommend.
+Where the two warnings have to name browsers, they name them in that order —
+Vivaldi, Brave, Chrome, Edge. Any of them works; the order is a preference, and
+Edge comes last because its only merit here is being already installed on the
+school's Windows.
 
-Neither page names browsers to decide what to do: `folder-access.ts` asks for
-`showDirectoryPicker`, which is what actually separates the two rows above — a
-list of names would accuse a Chromium fork that works perfectly well. The home
-page keeps quiet where the picker exists and shows the Downloads warning where it
-does not; the filing page additionally disables the destination folder and the
-per-first-name subfolders, which it cannot honour through downloads.
+Those names are advice, never a test. What the pages act on is
+`showDirectoryPicker`, asked for in `folder-access.ts`: that is what actually
+separates the two rows above, whereas a list of names would sooner or later
+accuse a Chromium fork that works perfectly well. The home page keeps quiet
+where the picker exists and shows the Downloads warning where it does not; the
+filing page additionally disables the destination folder and the per-first-name
+subfolders, which it cannot honour through downloads.
 
 ---
 
