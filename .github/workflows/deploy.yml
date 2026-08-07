@@ -1,4 +1,4 @@
-name: Vérification et déploiement
+name: Verify and deploy
 
 on:
   push:
@@ -9,16 +9,16 @@ on:
 permissions:
   contents: read
 
-# Un seul déploiement à la fois, sans annuler celui qui est en cours.
+# One deployment at a time, without cancelling the one in flight.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  # Qualité et vérification tournent en parallèle : une erreur de style ne doit
-  # pas masquer un test cassé, et inversement.
-  qualite:
-    name: Format et lint
+  # Quality and verification run in parallel: a style error must not mask a
+  # broken test, nor the other way round.
+  quality:
+    name: Format and lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,14 +30,14 @@ jobs:
 
       - run: npm ci
 
-      - name: Mise en forme (Prettier)
+      - name: Formatting (Prettier)
         run: npm run format:check
 
       - name: Lint (ESLint)
         run: npm run lint
 
-  verifier:
-    name: Types, tests et build
+  verify:
+    name: Types, tests and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,27 +49,27 @@ jobs:
 
       - run: npm ci
 
-      - name: Vérification des types
+      - name: Type check
         run: npm run typecheck
 
-      - name: Tests unitaires
+      - name: Unit tests
         run: npm test
 
-      - name: Construction du site
+      - name: Build the site
         run: npm run build
         env:
-          # GitHub Pages sert le site sous /<nom-du-depot>/.
+          # GitHub Pages serves the site under /<repository-name>/.
           VITE_BASE: /${{ github.event.repository.name }}/
 
-      - name: Préparation de l'artefact Pages
+      - name: Prepare the Pages artifact
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
-  deployer:
-    name: Mise en ligne
-    needs: [qualite, verifier]
+  deploy:
+    name: Publish
+    needs: [quality, verify]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -77,7 +77,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deploiement.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deploiement
+      - id: deployment
         uses: actions/deploy-pages@v4

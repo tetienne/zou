@@ -4,10 +4,10 @@ import vitest from '@vitest/eslint-plugin';
 import html from '@html-eslint/eslint-plugin';
 import prettier from 'eslint-config-prettier/flat';
 
-// Règles @html-eslint purement typographiques : Prettier réécrit les mêmes
-// caractères, les deux se contrediraient. La liste est explicite parce que
-// `meta.type` ne distingue pas la mise en forme du reste chez ce plugin.
-const REGLES_DE_MISE_EN_FORME_HTML = Object.fromEntries(
+// Purely typographic @html-eslint rules: Prettier rewrites the same
+// characters, so the two would contradict each other. The list is spelled out
+// because this plugin's `meta.type` does not separate formatting from the rest.
+const HTML_FORMATTING_RULES = Object.fromEntries(
   [
     'attrs-newline',
     'class-spacing',
@@ -22,19 +22,19 @@ const REGLES_DE_MISE_EN_FORME_HTML = Object.fromEntries(
     'quotes',
     'require-closing-tags',
     'sort-attrs',
-  ].map((nom) => [`@html-eslint/${nom}`, 'off']),
+  ].map((rule) => [`@html-eslint/${rule}`, 'off']),
 );
 
 export default tseslint.config(
   { ignores: ['dist/', 'node_modules/', 'coverage/'] },
 
-  // --- TypeScript de l'application ----------------------------------------
+  // --- Application TypeScript ----------------------------------------------
   {
     files: ['**/*.ts'],
     extends: [
       js.configs.recommended,
-      // `strictTypeChecked` a besoin du programme TypeScript : c'est ce qui
-      // permet des règles comme no-unnecessary-condition ou no-floating-promises.
+      // `strictTypeChecked` needs the TypeScript program: that is what enables
+      // rules such as no-unnecessary-condition or no-floating-promises.
       tseslint.configs.strictTypeChecked,
       tseslint.configs.stylisticTypeChecked,
     ],
@@ -45,19 +45,19 @@ export default tseslint.config(
       },
     },
     rules: {
-      // Le code est en français : les identifiants accentués sont voulus.
+      // User-facing strings are French, so accented characters are expected.
       'no-irregular-whitespace': ['error', { skipStrings: true, skipComments: true }],
 
-      // Une promesse non attendue dans un gestionnaire d'événement est un bug
-      // silencieux : l'erreur disparaît sans que rien ne s'affiche.
+      // An un-awaited promise in an event handler is a silent bug: the error
+      // vanishes without anything showing up on screen.
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
 
-      // On veut savoir quand un `catch` avale une erreur sans rien en faire.
+      // We want to know when a `catch` swallows an error without acting on it.
       'no-empty': ['error', { allowEmptyCatch: false }],
 
-      // Les entiers littéraux d'un nom de fichier ou d'une échelle sont
-      // explicites dans leur contexte ; pas de règle no-magic-numbers.
+      // Literal integers in a file name or a scale read fine in context, hence
+      // no no-magic-numbers rule.
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
     },
   },
@@ -67,7 +67,7 @@ export default tseslint.config(
     files: ['src/**/*.test.ts'],
     extends: [vitest.configs.recommended],
     rules: {
-      // Les tests construisent des cas volontairement limites.
+      // Tests deliberately build edge cases.
       '@typescript-eslint/no-non-null-assertion': 'off',
       'vitest/expect-expect': 'error',
       'vitest/no-focused-tests': 'error',
@@ -76,7 +76,7 @@ export default tseslint.config(
     },
   },
 
-  // --- Fichiers de configuration -------------------------------------------
+  // --- Configuration files -------------------------------------------------
   {
     files: ['*.config.ts', '*.config.js'],
     rules: {
@@ -84,15 +84,15 @@ export default tseslint.config(
     },
   },
 
-  // --- Pages HTML ----------------------------------------------------------
+  // --- HTML pages ----------------------------------------------------------
   {
     files: ['**/*.html'],
     extends: [html.configs['flat/recommended']],
     plugins: { html },
     language: 'html/html',
     rules: {
-      // Accessibilité : l'utilisatrice doit pouvoir tout faire au clavier et
-      // chaque champ doit être annoncé correctement par un lecteur d'écran.
+      // Accessibility: everything must be reachable from the keyboard, and every
+      // field must be announced properly by a screen reader.
       '@html-eslint/require-img-alt': 'error',
       '@html-eslint/require-input-label': 'error',
       '@html-eslint/require-meta-viewport': 'error',
@@ -102,13 +102,12 @@ export default tseslint.config(
       '@html-eslint/no-duplicate-id': 'error',
       '@html-eslint/require-button-type': 'error',
 
-      // Prettier est seul responsable de la mise en forme du HTML.
-      // `eslint-config-prettier` ne couvre pas @html-eslint, d'où cette liste.
-      ...REGLES_DE_MISE_EN_FORME_HTML,
+      // Prettier alone owns HTML formatting. `eslint-config-prettier` does not
+      // cover @html-eslint, hence the explicit list above.
+      ...HTML_FORMATTING_RULES,
     },
   },
 
-  // Doit rester en dernier : désactive les règles qui entrent en conflit
-  // avec le formateur.
+  // Must stay last: switches off the rules that clash with the formatter.
   prettier,
 );

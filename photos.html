@@ -18,52 +18,52 @@
     </header>
 
     <main class="mx-auto max-w-5xl pt-4">
-      <div id="avertissement" role="status"></div>
+      <div id="warning" role="status"></div>
 
-      <section class="etape">
+      <section class="step">
         <h2 class="mb-3 text-xl font-semibold">1. Les photos à ranger</h2>
         <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="choisir-source" class="bouton">Choisir le dossier des photos</button>
-          <span class="font-mono text-[0.95rem] text-slate-500" id="nom-source">aucun dossier choisi</span>
+          <button type="button" id="choose-source" class="button">Choisir le dossier des photos</button>
+          <span class="font-mono text-[0.95rem] text-slate-500" id="source-name">aucun dossier choisi</span>
         </div>
       </section>
 
-      <section class="etape">
+      <section class="step">
         <h2 class="mb-3 text-xl font-semibold">2. Où les ranger</h2>
         <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="choisir-destination" class="bouton">Choisir le dossier de destination</button>
-          <span class="font-mono text-[0.95rem] text-slate-500" id="nom-destination">aucun dossier choisi</span>
+          <button type="button" id="choose-destination" class="button">Choisir le dossier de destination</button>
+          <span class="font-mono text-[0.95rem] text-slate-500" id="destination-name">aucun dossier choisi</span>
         </div>
         <label class="mt-3 block">
-          <input type="checkbox" id="sous-dossiers" checked class="align-middle" />
+          <input type="checkbox" id="subfolders" checked class="align-middle" />
           Créer un sous-dossier par prénom
         </label>
-        <label class="mt-2 block" for="modele">
+        <label class="mt-2 block" for="pattern">
           Nom des fichiers :
-          <select id="modele" class="champ">
-            <option value="prenom_date_num">Léa_2026-06-14_01.jpg</option>
-            <option value="prenom_num">Léa_01.jpg</option>
-            <option value="date_prenom_num">2026-06-14_Léa_01.jpg</option>
+          <select id="pattern" class="field">
+            <option value="name_date_num">Léa_2026-06-14_01.jpg</option>
+            <option value="name_num">Léa_01.jpg</option>
+            <option value="date_name_num">2026-06-14_Léa_01.jpg</option>
           </select>
         </label>
-        <p class="aide mt-2">La date est celle de la photo (date du fichier).</p>
+        <p class="hint mt-2">La date est celle de la photo (date du fichier).</p>
       </section>
 
-      <section class="etape">
+      <section class="step">
         <h2 class="mb-3 text-xl font-semibold">3. Lire les QR codes</h2>
-        <button type="button" id="analyser" class="bouton" disabled>Analyser les photos</button>
-        <progress id="progression" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
-        <p class="aide mt-2" id="etat-analyse" role="status"></p>
+        <button type="button" id="scan" class="button" disabled>Analyser les photos</button>
+        <progress id="scan-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
+        <p class="hint mt-2" id="scan-status" role="status"></p>
       </section>
 
-      <section class="etape" id="bloc-resultats" hidden>
+      <section class="step" id="results-block" hidden>
         <h2 class="mb-1 text-xl font-semibold">4. Vérifier et copier</h2>
-        <p class="aide mb-4">
+        <p class="hint mb-4">
           Sous chaque photo : le prénom, le nom que le fichier va prendre, et où il en est. Vous pouvez corriger un
           prénom en cliquant dessus. Une photo sans prénom n'est pas copiée.
         </p>
 
-        <div id="a-corriger" class="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-3" hidden>
+        <div id="needs-attention" class="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-3" hidden>
           <p class="flex items-start gap-2 text-[1.05rem] font-semibold text-amber-900">
             <svg
               viewBox="0 0 24 24"
@@ -79,7 +79,7 @@
               <path d="M12 9v4"></path>
               <path d="M12 17h.01"></path>
             </svg>
-            <span id="a-corriger-texte"></span>
+            <span id="needs-attention-text"></span>
           </p>
           <p class="mt-1 text-[0.95rem] text-amber-900">
             Elles sont placées au début de la galerie ci-dessous. Écrivez le prénom : la photo rejoint aussitôt les
@@ -88,7 +88,7 @@
         </div>
 
         <p
-          id="tout-pret"
+          id="all-ready"
           class="mb-4 flex items-center gap-2 rounded-xl border-2 border-green-700 bg-green-50 px-4 py-3 font-semibold text-green-900"
           hidden
         >
@@ -109,33 +109,33 @@
         </p>
 
         <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="copier" class="bouton" disabled>Copier les photos</button>
-          <span id="etat-copie" class="aide" role="status"></span>
+          <button type="button" id="copy" class="button" disabled>Copier les photos</button>
+          <span id="copy-status" class="hint" role="status"></span>
         </div>
-        <progress id="progression-copie" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
+        <progress id="copy-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
 
         <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
-          <p id="recapitulatif" class="aide"></p>
+          <p id="summary" class="hint"></p>
           <fieldset class="flex flex-wrap items-center gap-2">
             <legend class="sr-only">Taille des photos</legend>
-            <span class="aide">Taille des photos :</span>
+            <span class="hint">Taille des photos :</span>
             <div class="inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white">
               <label class="border-r border-slate-300">
-                <input type="radio" name="taille" value="petites" class="peer sr-only" />
+                <input type="radio" name="size" value="small" class="peer sr-only" />
                 <span
                   class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
                   >Petites</span
                 >
               </label>
               <label class="border-r border-slate-300">
-                <input type="radio" name="taille" value="moyennes" class="peer sr-only" checked />
+                <input type="radio" name="size" value="medium" class="peer sr-only" checked />
                 <span
                   class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
                   >Moyennes</span
                 >
               </label>
               <label>
-                <input type="radio" name="taille" value="grandes" class="peer sr-only" />
+                <input type="radio" name="size" value="large" class="peer sr-only" />
                 <span
                   class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
                   >Grandes</span
@@ -145,16 +145,16 @@
           </fieldset>
         </div>
 
-        <div id="resultats" class="galerie galerie-moyennes"></div>
+        <div id="results" class="gallery gallery-medium"></div>
 
         <!--
-          Liste des prénoms de la classe, proposée en autocomplétion sous chaque
-          champ. `<datalist>` n'est pas classé « widely available » par baseline,
-          mais sa dégradation est indolore : sans lui le champ reste une saisie
-          libre, ce qui est exactement le comportement de repli voulu.
+          Class list offered as autocompletion under each field. `<datalist>` is
+          not classified "widely available" by baseline, but degrading is
+          painless: without it the field stays a free-text input, which is
+          exactly the intended fallback.
         -->
         <!-- eslint-disable @html-eslint/use-baseline -->
-        <datalist id="prenoms-connus"></datalist>
+        <datalist id="known-names"></datalist>
         <!-- eslint-enable @html-eslint/use-baseline -->
       </section>
     </main>
@@ -178,15 +178,15 @@
     </footer>
 
     <!--
-  Repli pour les navigateurs sans accès aux dossiers : ce champ est masqué et
-  déclenché par le bouton « Choisir le dossier des photos ».
-  `webkitdirectory` n'est pas standard, mais c'est le seul moyen de faire
-  choisir un dossier entier à Firefox et Safari.
--->
+      Fallback for browsers without folder access: this field is hidden and
+      triggered by the « Choisir le dossier des photos » button.
+      `webkitdirectory` is non-standard, but it is the only way to make Firefox
+      and Safari offer a whole folder.
+    -->
     <!-- eslint-disable @html-eslint/use-baseline -->
     <input
       type="file"
-      id="source-secours"
+      id="fallback-source"
       webkitdirectory
       multiple
       accept="image/*"

@@ -1,297 +1,298 @@
-# Photos d'élèves — reconnaissance par QR code
+# qr-school — filing pupils' artwork photos by QR code
 
-Petite application web qui range automatiquement les photos des travaux d'élèves.
-La maîtresse pose une étiquette QR (avec le prénom) à côté du travail, photographie
-le tout, puis l'application relit le QR code et copie chaque photo sous le nom
-`Prénom_date_numéro.jpg`, dans un sous-dossier par enfant.
+A small web app that automatically files photos of pupils' work. The teacher
+puts a QR label carrying the child's first name next to the work, photographs
+the two together, and the app reads the QR code back to copy each photo as
+`Prénom_date_numéro.jpg` into a per-child subfolder.
 
-**Rien à installer. Aucune ligne de commande. Rien n'est envoyé sur Internet :
-tout le traitement se fait dans le navigateur, sur l'ordinateur de la maîtresse.**
+**Nothing to install. No command line. Nothing leaves the computer: all the
+processing happens in the browser.**
 
----
-
-## Pourquoi une page web et pas Python ni Go
-
-La contrainte principale est « une maîtresse, un PC Windows, pas de ligne de
-commande ». C'est elle qui décide de la technologie :
-
-|                       | Python                                                      | Go                           | **Page web statique (TypeScript)**              |
-| --------------------- | ----------------------------------------------------------- | ---------------------------- | ----------------------------------------------- |
-| Installation          | Python + dépendances, ou un `.exe` PyInstaller de 60–150 Mo | un `.exe` de ~10 Mo à copier | **rien, une adresse à mettre en favori**        |
-| Lancement             | double-clic sur un `.exe` → alerte SmartScreen / antivirus  | idem                         | **on clique sur le favori**                     |
-| Mise à jour           | renvoyer un nouvel `.exe` à chaque correction               | idem                         | **`git push`, elle recharge la page**           |
-| Hébergement           | —                                                           | —                            | **GitHub Pages, gratuit**                       |
-| Lecture du QR         | pyzbar/OpenCV                                               | gozxing                      | zxing-wasm (WebAssembly de zxing-cpp)           |
-| Écriture des fichiers | libre                                                       | libre                        | dossier choisi par l'utilisatrice (Edge/Chrome) |
-
-Le seul vrai avantage de Python ou Go serait l'accès libre au disque. Or depuis
-2021 les navigateurs Chromium savent le faire : l'API **File System Access**
-permet de choisir un dossier et d'y écrire, après un clic explicite de
-l'utilisatrice. C'est exactement le besoin ici, sans serveur local ni exécutable
-à faire passer l'antivirus de l'école.
-
-Deux points qui ont fait pencher la balance :
-
-- **Pas d'OCR.** Le prénom n'est pas lu sur l'étiquette : il est _dans_ le QR code.
-  C'est la partie la plus fragile du projet qui disparaît complètement. On n'a
-  donc besoin ni de Tesseract, ni d'un modèle de reconnaissance de texte.
-- **Zéro maintenance côté poste.** Pas d'exécutable à redéployer, pas de version
-  périmée sur le PC de la classe.
-
-**Quand faudra-t-il changer d'avis ?** Si un jour il faut traiter des photos HEIC
-(iPhone), lire des milliers de photos d'un coup, ou tourner sur un PC bridé sous
-Firefox uniquement, alors un binaire Go unique (interface web servie en local sur
-`http://localhost:8080`, ouverte automatiquement au double-clic) devient le bon
-plan B. Le code de cette version resterait largement réutilisable.
+The interface is in French because the user is a French primary school teacher.
+Everything else — code, identifiers, comments, tests, this file — is in English.
 
 ---
 
-## Mise en ligne (une seule fois)
+## Why a web page rather than Python or Go
 
-1. Pousser ce dépôt sur GitHub.
-2. `Settings` → `Pages` → _Source_ : **GitHub Actions**.
-3. Le workflow `.github/workflows/deploy.yml` fait le reste : à chaque push sur
-   `main`, il vérifie les types, lance les tests, construit le site et le
-   publie. Les pull requests passent les mêmes vérifications sans déployer.
-4. Au bout d'une minute, le site est à l'adresse
-   `https://<utilisateur>.github.io/qr-school/`.
-5. Envoyer cette adresse à la maîtresse et lui faire mettre un favori sur le
-   bureau.
+The binding constraint is "one teacher, one Windows PC, no command line". That
+is what picks the technology:
 
-Le chemin de base est calculé automatiquement à partir du nom du dépôt
-(`VITE_BASE`) ; en local, `npm run dev` sert à la racine. HTTPS est
-indispensable — l'API d'accès aux dossiers ne fonctionne pas en `file://` — et
-GitHub Pages le fournit d'office.
+|               | Python                                                | Go                      | **Static page (TypeScript)**                |
+| ------------- | ----------------------------------------------------- | ----------------------- | ------------------------------------------- |
+| Installation  | Python plus deps, or a 60–150 MB PyInstaller `.exe`   | a ~10 MB `.exe` to copy | **nothing, a bookmark**                     |
+| Launching     | double-click an `.exe` → SmartScreen / antivirus warn | same                    | **click the bookmark**                      |
+| Updating      | ship a new `.exe` for every fix                       | same                    | **`git push`, she reloads the page**        |
+| Hosting       | —                                                     | —                       | **GitHub Pages, free**                      |
+| QR decoding   | pyzbar / OpenCV                                       | gozxing                 | zxing-wasm (WebAssembly build of zxing-cpp) |
+| Writing files | unrestricted                                          | unrestricted            | folder the user picks (Edge / Chrome)       |
+
+The only real advantage of Python or Go would be unrestricted disk access — and
+Chromium has been able to do that since 2021 through the **File System Access**
+API: the user picks a folder and the browser writes into it. That is exactly
+what is needed here, with no local server and no executable to get past the
+school's antivirus.
+
+Two points settled it:
+
+- **No OCR.** The first name is not read off the label, it is _inside_ the QR
+  code. The most fragile part of the project disappears entirely — no Tesseract,
+  no vision model.
+- **No maintenance on the machine.** No executable to redeploy, no stale version
+  sitting on the classroom PC.
+
+**When should this be revisited?** If HEIC photos (iPhone) have to be handled,
+or thousands of photos at a time, or the machine is locked down to Firefox, then
+a single Go binary serving the same interface on `localhost` becomes the right
+plan B. Most of this code would carry over.
 
 ---
 
-## Mode d'emploi
+## Deployment (once)
 
-### 1. Créer les étiquettes (une fois par an)
+1. Push this repository to GitHub.
+2. `Settings` → `Pages` → _Source_: **GitHub Actions**.
+3. `.github/workflows/deploy.yml` does the rest: on every push to `main` it
+   checks types, runs the tests, builds the site and publishes it. Pull requests
+   run the same checks without deploying.
+4. A minute later the site is at `https://<user>.github.io/qr-school/`.
+5. Send that address to the teacher and have her bookmark it on the desktop.
 
-Page **Créer les étiquettes** : taper la liste des prénoms, un par ligne, choisir
-le nombre d'étiquettes par enfant, cliquer sur _Générer_ puis _Imprimer_.
+The base path is derived from the repository name (`VITE_BASE`); locally
+`npm run dev` serves from the root. HTTPS is mandatory — the folder access API
+does not work over `file://` — and GitHub Pages provides it out of the box.
 
-Chaque étiquette porte le QR code et le prénom écrit en dessous — pratique pour
-que la maîtresse les distribue, et pour vérifier à l'œil que la bonne étiquette
-est sur le bon travail. Les prénoms sont mémorisés dans le navigateur, pas besoin
-de les retaper.
+---
 
-S'il y a deux `Léa` dans la classe, écrire `Léa B` et `Léa M`.
+## How the teacher uses it
 
-Conseil : plastifier ou coller les étiquettes sur des petits cartons réutilisables.
+### 1. Print the labels (once a year)
 
-### 2. Photographier
+**Créer les étiquettes** page: type the first names one per line, choose how
+many labels per child, click _Générer_ then _Imprimer_.
 
-Poser l'étiquette à côté du travail et prendre la photo. L'étiquette doit être
-bien à plat, entière, et occuper une part visible de l'image (en gros, le QR ne
-doit pas faire moins d'un vingtième de la largeur de la photo).
+Each label carries the QR code and the first name in plain text — handy for
+handing them out, and for checking by eye that the right label sits next to the
+right piece of work. The list is remembered in the browser.
 
-### 3. Ranger les photos
+If there are two `Léa` in the class, write `Léa B` and `Léa M`.
 
-Page **Ranger les photos** :
+### 2. Take the photos
 
-1. _Choisir le dossier des photos_ → le dossier de la carte SD ou du téléphone.
-2. _Choisir le dossier de destination_ → par exemple `Documents\Travaux 2026`.
-3. _Analyser les photos_ → chaque QR code est lu, puis une galerie s'affiche :
-   une carte par photo, avec l'image, le prénom trouvé, le nom que le fichier va
-   prendre et son état.
-4. Corriger les prénoms manquants. Les photos concernées **remontent en tête de
-   la galerie** et portent une bordure épaisse : ce sont les seules qui
-   demandent quelque chose. Un bandeau en annonce le nombre. Dès qu'un prénom
-   est écrit, la carte rejoint les autres.
+Put the label next to the work and shoot. The label must be fully visible and
+take up a reasonable share of the frame — as a rule of thumb the QR should not
+be narrower than a twentieth of the photo. A tilt of 15–40° is fine; see the
+decoder section for the measured limits.
+
+### 3. File the photos
+
+**Ranger les photos** page:
+
+1. _Choisir le dossier des photos_ → the SD card or phone folder.
+2. _Choisir le dossier de destination_ → e.g. `Documents\Travaux 2026`.
+3. _Analyser les photos_ → every QR code is read, then a gallery appears: one
+   card per photo with the image, the first name found, the name the file will
+   take and its status.
+4. Fix the missing first names. Those photos **move to the front of the gallery**
+   and carry a thick border: they are the only ones asking for anything. A
+   banner gives the count. As soon as a name is typed, the card rejoins the rest.
 5. _Copier les photos_.
 
-Le champ prénom propose la liste de la classe en autocomplétion, reprise de la
-page des étiquettes. La taille des photos est réglable — Petites, Moyennes,
-Grandes — et le choix est mémorisé d'une semaine sur l'autre.
+The first name field offers the class list as autocompletion, taken from the
+labels page. Thumbnail size is adjustable — Petites, Moyennes, Grandes — and the
+choice is remembered.
 
-Les photos d'origine ne sont **ni modifiées ni supprimées**, uniquement copiées.
-Relancer le rangement deux fois n'écrase rien : la numérotation reprend à la
-suite. Attention : elle suit l'ordre des photos, pas l'ordre d'affichage — une
-carte remontée en tête garde le numéro correspondant à sa place dans le dossier.
-
----
-
-## Navigateurs
-
-| Navigateur                              | Résultat                                                                                                          |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Microsoft Edge, Google Chrome (Windows) | tout fonctionne, écriture directe dans le dossier choisi                                                          |
-| Firefox, Safari                         | l'analyse fonctionne, mais les photos renommées arrivent une par une dans « Téléchargements », sans sous-dossiers |
-
-Edge étant installé par défaut sur Windows, c'est le choix à recommander.
+Original photos are **never modified or deleted**, only copied. Filing the same
+folder twice overwrites nothing: numbering continues. Note that it follows the
+order of the photos, not the order they are displayed in — a card moved to the
+front keeps the number matching its place in the folder.
 
 ---
 
-## Développement
+## Browsers
+
+| Browser                                 | Result                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------------------------- |
+| Microsoft Edge, Google Chrome (Windows) | everything works, files written straight into the chosen folder                       |
+| Firefox, Safari                         | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
+
+Edge ships with Windows, so that is the one to recommend.
+
+---
+
+## Development
 
 ```bash
 npm install
-npm run dev           # serveur local avec rechargement à chaud
-npm run verifier      # toute la chaîne, comme la CI
-npm run format        # applique Prettier
-npm run format:check  # vérifie sans modifier
+npm run dev           # local server with hot reload
+npm run verify        # the whole chain, same as CI
+npm run format        # apply Prettier
+npm run format:check  # check without writing
 npm run lint          # ESLint
-npm run lint:fix      # ESLint avec corrections automatiques
-npm run typecheck     # tsc --noEmit, mode strict
-npm test              # tests unitaires (Vitest)
-npm run build         # site statique dans dist/
-npm run preview       # sert dist/ pour vérifier le build
+npm run lint:fix      # ESLint with autofixes
+npm run typecheck     # tsc --noEmit, strict
+npm test              # unit tests (Vitest)
+npm run build         # static site into dist/
+npm run preview       # serve dist/ to check the build
 ```
 
-TypeScript en mode strict (`noUncheckedIndexedAccess` compris), Tailwind CSS 4
-via le plugin Vite, aucun framework d'interface : le DOM est manipulé
-directement, l'application tient en quelques centaines de lignes.
+TypeScript in strict mode (including `noUncheckedIndexedAccess`), Tailwind CSS 4
+through its Vite plugin, no UI framework: the DOM is driven directly and the app
+fits in a few hundred lines.
 
-| Fichier                              | Rôle                                                          |
-| ------------------------------------ | ------------------------------------------------------------- |
-| `src/noms.ts`                        | prénoms, extensions, noms de fichiers — sans DOM              |
-| `src/rangement.ts`                   | numérotation et recherche d'un nom libre — sans DOM ni disque |
-| `src/decodage-qr.ts`                 | décodage d'un QR code — sans DOM, testé sans navigateur       |
-| `src/lecture-qr.ts`                  | lecture d'une photo : son QR code et sa vignette              |
-| `src/generation-qr.ts`               | génération des QR codes des étiquettes                        |
-| `src/dom.ts`                         | accès aux éléments de la page, avec contrôle de type          |
-| `src/photos.ts`, `src/etiquettes.ts` | câblage de l'interface                                        |
+| File                             | Role                                                    |
+| -------------------------------- | ------------------------------------------------------- |
+| `src/names.ts`                   | first names, extensions, output file names — DOM-free   |
+| `src/filing.ts`                  | numbering and free-name lookup — no DOM, no disk        |
+| `src/qr-decoding.ts`             | decoding a QR code — DOM-free, tested without a browser |
+| `src/qr-generation.ts`           | generating the label QR codes                           |
+| `src/photo-reading.ts`           | reading a photo: its QR code and its thumbnail          |
+| `src/dom.ts`                     | element lookup with a runtime type check                |
+| `src/photos.ts`, `src/labels.ts` | interface wiring                                        |
 
-La logique métier est volontairement séparée du DOM : `noms.ts` et
-`rangement.ts` sont testés sans navigateur, et `rangement.ts` ne touche au
-disque qu'à travers un prédicat `existe` qu'on remplace en test.
+Business logic is deliberately kept away from the DOM: `names.ts` and `filing.ts`
+are tested without a browser, and `filing.ts` only touches the disk through an
+`exists` predicate that tests replace.
 
-## Bibliothèques de reconnaissance
+## Language convention
 
-**Il n'y a pas de reconnaissance de prénom.** Le prénom n'est pas _lu_ sur
-l'étiquette, il est _contenu_ dans le QR code. Il n'y a donc ni OCR, ni
-Tesseract, ni modèle de vision — c'est ce qui rend le projet fiable et léger.
-Le repli quand la lecture échoue n'est pas un second algorithme : c'est la
-maîtresse qui écrit le prénom sur la carte, aidée par l'autocomplétion depuis la
-liste de la classe.
+Code is English, the interface is French. Concretely:
 
-### Le décodeur : zxing-wasm, et pourquoi pas les plus populaires
+- identifiers, comments, commit messages, test names, HTML `id`s and CSS class
+  names are English;
+- every string the teacher can read stays French — page copy, button labels,
+  `aria-label`s, placeholders, status messages, and the `Sans-nom` fallback that
+  ends up in a file name;
+- French is kept where it is behaviour rather than prose: `<html lang="fr">`,
+  `localeCompare(…, 'fr')`, and the French keys `extractFirstName` accepts
+  (`prenom=`, `nom=`) because that is what a French label generator would emit.
 
-Un seul décodeur,
-[zxing-wasm](https://github.com/Sec-ant/zxing-wasm) — la compilation
-WebAssembly de [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp). Il lit le
-fichier photo en une passe pleine résolution : ni redimensionnement, ni
-découpage en zones, ni détection native à essayer d'abord.
+## Recognition libraries
 
-Ce choix va contre la popularité, et il a été mesuré. Quatre décodeurs ont été
-passés sur les mêmes 22 photos, fabriquées par projection 3D de l'étiquette puis
-homographie inverse — c'est-à-dire de vraies images en perspective, pas de
-simples rotations :
+**There is no first-name recognition.** The name is not _read_ from the label,
+it is _carried_ by the QR code. No OCR, no Tesseract, no vision model — that is
+what makes the project reliable. The fallback when reading fails is not a second
+algorithm: the teacher types the name on the card, helped by autocompletion from
+the class list.
 
-| Décodeur                                              | Cas décodés | Temps cumulé | Inclinaison    |
-| ----------------------------------------------------- | ----------- | ------------ | -------------- |
-| [jsQR](https://github.com/cozmo/jsQR)                 | 7 / 22      | 33,9 s       | échec dès 15°  |
-| [@zxing/library](https://github.com/zxing-js/library) | 7 / 22      | 19,9 s       | échec dès 15°  |
-| [qr-scanner](https://github.com/nimiq/qr-scanner)     | 6 / 22      | 23,0 s       | échec dès 15°  |
-| **zxing-wasm**                                        | **17 / 22** | **2,4 s**    | OK jusqu'à 45° |
+### The decoder: zxing-wasm, and why not the popular ones
 
-Les trois options en JavaScript pur échouent au même endroit parce qu'elles sont
-le même moteur : `qr-scanner` est un fork du portage jsQR, lui-même un portage de
-l'ancien ZXing Java, dont `@zxing/library` est l'autre portage. Elles héritent
-toutes de la même extraction de grille, incapable de redresser une perspective.
-Or une photo prise à main levée est presque toujours inclinée de 15 à 40° : c'est
-le cas normal, pas le cas limite.
+One decoder, [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) — the
+WebAssembly build of [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp). It
+reads the photo file in a single full-resolution pass: no downscaling, no tiling,
+no native detector to try first.
 
-`BarcodeDetector`, l'API intégrée au navigateur, a été **retirée
-volontairement**. Elle reste expérimentale et son support dépend du système
-d'exploitation, donc elle introduisait un chemin de code au comportement
-variable selon le poste — impossible à reproduire lors d'un dépannage à
-distance — pour un gain nul face aux 100 ms de zxing-wasm.
+This goes against popularity, and it was measured. Four decoders were run over
+the same 22 photos, built by 3D projection of the label followed by an inverse
+homography — real perspective images, not mere rotations:
 
-Le prix est le poids : ~450 ko gzippés de WebAssembly, contre 52 ko pour jsQR.
-Chargé une fois, mis en cache par le navigateur, sur un outil utilisé une fois
-par semaine depuis un ordinateur de bureau.
+| Decoder                                               | Decoded     | Total time | Tilt            |
+| ----------------------------------------------------- | ----------- | ---------- | --------------- |
+| [jsQR](https://github.com/cozmo/jsQR)                 | 7 / 22      | 33.9 s     | fails from 15°  |
+| [@zxing/library](https://github.com/zxing-js/library) | 7 / 22      | 19.9 s     | fails from 15°  |
+| [qr-scanner](https://github.com/nimiq/qr-scanner)     | 6 / 22      | 23.0 s     | fails from 15°  |
+| **zxing-wasm**                                        | **17 / 22** | **2.4 s**  | holds up to 45° |
 
-Sur le risque de maintenance : `zxing-wasm` est une enveloppe mince, le décodeur
-est `zxing-cpp`, épinglé comme sous-module à un commit précis (exporté par le
-paquet sous `ZXING_CPP_COMMIT`). Si l'enveloppe était abandonnée, le `.wasm`
-reste figé dans le lockfile et empaqueté comme asset local : rien à récupérer,
-aucun service distant. C'est un profil de risque très différent de celui d'un
-décodeur abandonné, qui ne rattrapera jamais son retard.
+The three pure-JavaScript options fail in the same place because they are the
+same engine: `qr-scanner` forks the jsQR port, itself a port of the old Java
+ZXing, of which `@zxing/library` is the other port. They all inherit the same
+grid extraction, which cannot rectify perspective. A hand-held photo is almost
+always tilted by 15–40°, so that is the normal case, not the edge case.
 
-### La génération
+`BarcodeDetector`, the browser's built-in API, was **deliberately dropped**. It
+is still experimental and its availability depends on the operating system, so
+it introduced a code path whose behaviour varied per machine — impossible to
+reproduce when troubleshooting remotely — for no gain against zxing-wasm's
+100 ms.
 
-Pour la génération :
+The price is weight: ~450 kB gzipped of WebAssembly against 52 kB for jsQR.
+Loaded once, cached by the browser, on a tool used once a week from a desktop.
+
+On maintenance risk: `zxing-wasm` is a thin wrapper, the decoder is `zxing-cpp`,
+pinned as a submodule at a specific commit (the package exports it as
+`ZXING_CPP_COMMIT`). If the wrapper were abandoned, the `.wasm` stays frozen in
+the lockfile and bundled as a local asset: nothing to recover, no remote
+service. That is a very different risk profile from an abandoned decoder, which
+would never catch up.
+
+### Generation
+
 [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (2.0, MIT,
-~20 kB), avec `stringToBytes` forcé en UTF-8 — sans quoi la version 2 encode en
-latin-1 et « Léa » revient en mojibake. Correction d'erreur niveau _M_ : une
-étiquette un peu abîmée ou mal éclairée reste lisible.
+~20 kB), with `stringToBytes` forced to UTF-8 — otherwise version 2 encodes as
+latin-1 and « Léa » comes back as mojibake. Error correction level _M_: a label
+that is slightly damaged or poorly lit still scans.
 
-Autres points :
+Other points:
 
-- L'orientation EXIF est prise en compte (`imageOrientation: 'from-image'`), donc
-  les photos prises en portrait sont lues correctement.
-- Les caractères interdits sous Windows (`< > : " / \ | ? *`) sont retirés des
-  noms de fichiers ; les accents et les traits d'union sont conservés.
-- Chaque page ne charge que ce dont elle a besoin : la planche d'étiquettes ne
-  télécharge pas le décodeur, et inversement.
-- Aucun CDN : tout est empaqueté par Vite.
+- EXIF orientation is honoured (`imageOrientation: 'from-image'`), so portrait
+  photos are read correctly.
+- Characters Windows forbids (`< > : " / \ | ? *`) are stripped from file names;
+  accents and hyphens are kept.
+- Each page loads only what it needs: the label sheet does not download the
+  decoder, and vice versa.
+- No CDN: everything is bundled by Vite.
 
-## Qualité du code
+## Code quality
 
-**ESLint 10** en configuration plate, avec le partage des rôles suivant :
+**ESLint 10** in flat config, with responsibilities split as follows:
 
-| Périmètre          | Configuration                                                       |
+| Scope              | Configuration                                                       |
 | ------------------ | ------------------------------------------------------------------- |
-| `src/**/*.ts`      | `typescript-eslint` en `strictTypeChecked` + `stylisticTypeChecked` |
-| `src/**/*.test.ts` | `@vitest/eslint-plugin` en plus                                     |
-| `*.html`           | `@html-eslint`, surtout pour l'accessibilité                        |
+| `src/**/*.ts`      | `typescript-eslint` in `strictTypeChecked` + `stylisticTypeChecked` |
+| `src/**/*.test.ts` | plus `@vitest/eslint-plugin`                                        |
+| `*.html`           | `@html-eslint`, mostly for accessibility                            |
 
-Les règles typées sont le vrai apport : elles ont besoin du programme
-TypeScript (`projectService: true`) et attrapent ce qu'un linter syntaxique
-laisse passer — `no-floating-promises` sur une promesse oubliée dans un
-gestionnaire d'événement, `no-unnecessary-condition` sur une garde devenue
-morte.
+The type-aware rules are the real value: they need the TypeScript program
+(`projectService: true`) and catch what a syntax-only linter misses —
+`no-floating-promises` on a promise dropped in an event handler,
+`no-unnecessary-condition` on a guard that has become dead.
 
-Côté HTML, les règles retenues sont celles qui protègent l'utilisatrice :
+On the HTML side the rules kept are the ones that protect the user:
 `require-input-label`, `require-img-alt`, `require-button-type`,
 `no-positive-tabindex`, `no-duplicate-id`, `use-baseline`.
 
-**Prettier 3** avec `prettier-plugin-tailwindcss`, qui range les classes
-utilitaires dans l'ordre du framework — sans quoi elles dérivent vers un
-désordre impossible à relire. Prettier est **seul** responsable de la mise en
-forme : `eslint-config-prettier` neutralise les règles concurrentes côté
-TypeScript, et une liste explicite fait le même travail pour `@html-eslint`,
-que `eslint-config-prettier` ne couvre pas.
+**Prettier 3** with `prettier-plugin-tailwindcss`, which sorts the utility
+classes in framework order — without it they drift into an unreadable mess.
+Prettier is the **sole** owner of formatting: `eslint-config-prettier` disables
+the competing TypeScript rules, and an explicit list does the same for
+`@html-eslint`, which `eslint-config-prettier` does not cover.
 
-TypeScript est volontairement épinglé en **6.0.x** : `typescript-eslint` 8
-déclare `typescript@<6.1.0` en pair, et refuse donc TypeScript 7. À bumper
-quand l'amont suivra.
+TypeScript is deliberately pinned to **6.0.x**: `typescript-eslint` 8 declares
+`typescript@<6.1.0` as a peer and therefore refuses TypeScript 7. Bump it when
+upstream catches up.
 
 ## Tests
 
-`npm test` couvre, sans navigateur :
+`npm test` covers, without a browser:
 
-- les prénoms et noms de fichiers (accents, caractères interdits, modèles) ;
-- la numérotation, y compris le deuxième passage sur les mêmes photos, qui doit
-  reprendre à `_03` au lieu d'écraser `_01` ;
-- la **robustesse du décodage**, sur des photos synthétiques mais réalistes : le
-  QR code est généré par la fonction que la page d'étiquettes utilise
-  réellement, puis projeté en 3D et rendu par homographie inverse avec
-  échantillonnage bilinéaire. Sont couverts l'inclinaison jusqu'à 45° sur un axe
-  et 35° sur deux, la rotation dans le plan, l'inclinaison combinée à la
-  rotation, et l'étiquette réduite à 150 px dans une photo de 3000 × 2000.
+- first names and output file names (accents, forbidden characters, patterns);
+- numbering, including a second pass over the same photos, which must continue
+  at `_03` instead of overwriting `_01`;
+- **decoder robustness** on synthetic but realistic photos: the QR code is
+  generated by the very function the labels page uses, then projected in 3D and
+  rendered through an inverse homography with bilinear sampling. Covered: tilt up
+  to 45° on one axis and 35° on two, in-plane rotation, tilt combined with
+  rotation, and a label shrunk to 150 px inside a 3000 × 2000 photo.
 
-Le fait de projeter l'étiquette au lieu de la tourner n'est pas un détail : la
-première version de ces tests utilisait des QR parfaitement droits, et laissait
-donc passer la seule dégradation que le décodeur d'alors ne savait pas traiter.
+Projecting the label rather than rotating it is not a detail: the first version
+of these tests used perfectly square QR codes, and therefore let through the one
+degradation the decoder of the time could not handle.
 
-Un test verrouille aussi une **limite assumée** — au-delà de 60° d'inclinaison,
-rien n'est décodé. S'il se met à passer un jour, c'est une bonne nouvelle à
-constater, pas une régression à corriger.
+One test also pins an **accepted limit** — beyond a 60° tilt nothing is decoded.
+If it ever starts passing, that is good news to notice, not a regression.
 
-Ce que les tests ne couvrent pas et qu'il faut vérifier à la main : le sélecteur
-de dossier natif de Windows, et de vraies photos d'appareil.
+What the tests do not cover, and has to be checked by hand: the native Windows
+folder picker, and real camera photos.
 
-## Limites connues
+## Known limitations
 
-- Les fichiers **HEIC/HEIF** (iPhone par défaut) ne sont pas lisibles par le
-  navigateur ; ils sont listés et signalés comme tels. Régler l'iPhone sur
-  « Le plus compatible » (JPEG), ou prévoir une conversion.
-- Un seul QR code par photo est utilisé (le premier trouvé).
-- Le déplacement (au lieu de la copie) n'est pas proposé, volontairement.
-- Les dossiers choisis ne sont pas mémorisés d'une session à l'autre.
-- Le sélecteur de dossier natif ne peut pas être piloté par un test automatisé :
-  cette partie n'est vérifiée qu'à la main.
+- **HEIC/HEIF** files (the iPhone default) cannot be decoded by the browser;
+  they are listed and flagged as such. Set the iPhone to "Most Compatible"
+  (JPEG), or convert beforehand.
+- Only one QR code per photo is used (the first one found).
+- Correcting a first name after the copy re-copies the photo under the new name,
+  but the earlier copy stays on disk — there is no undo in the interface.
+- Moving instead of copying is deliberately not offered.
+- The chosen folders are not remembered between sessions.
+- The native folder picker cannot be driven by an automated test: that part is
+  only verified by hand.

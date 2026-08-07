@@ -1,16 +1,16 @@
 /**
- * Récupère un élément de la page et vérifie son type à l'exécution.
+ * Fetches an element from the page and checks its type at runtime.
  *
- * Le constructeur est passé en paramètre plutôt que déduit d'un `as` : si un
- * identifiant disparaît de la page ou change de nature (un `<span>` devenu
- * `<div>`), l'erreur apparaît au chargement avec le nom du coupable, au lieu
- * d'un « cannot read properties of null » quelques lignes plus loin.
+ * The constructor is passed as an argument rather than inferred from an `as`
+ * cast: if an id disappears from the page or changes nature (a `<span>` turned
+ * into a `<div>`), the error surfaces on load naming the culprit, instead of a
+ * "cannot read properties of null" a few lines further down.
  */
-export function requis<T extends HTMLElement>(id: string, type: abstract new () => T): T {
+export function required<T extends HTMLElement>(id: string, type: abstract new () => T): T {
   const element = document.getElementById(id);
-  if (element === null) throw new Error(`Élément « ${id} » introuvable`);
+  if (element === null) throw new Error(`Element "${id}" not found`);
   if (!(element instanceof type)) {
-    throw new Error(`Élément « ${id} » : ${type.name} attendu, ${element.constructor.name} trouvé`);
+    throw new Error(`Element "${id}": expected ${type.name}, found ${element.constructor.name}`);
   }
   return element;
 }
