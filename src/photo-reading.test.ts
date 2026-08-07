@@ -8,7 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { prepareZXingModule } from 'zxing-wasm/reader';
-import { INKS } from './label-theme';
+import { brightnessOf, channelsOf, PALETTES, readableInk } from './label-theme';
 import { decodeQrCode, type PixelBuffer } from './qr-decoding';
 import { qrCodeMatrix } from './qr-generation';
 
@@ -38,12 +38,9 @@ interface Degradations {
   ink?: number;
 }
 
-/** Brightness of a `#rrggbb` ink, as the decoder perceives it. */
-function brightnessOf(hex: string): number {
-  const [red, green, blue] = [1, 3, 5].map((start) =>
-    Number.parseInt(hex.slice(start, start + 2), 16),
-  );
-  return Math.round(0.299 * red! + 0.587 * green! + 0.114 * blue!);
+/** The grey a `#rrggbb` ink turns into once the decoder drops the colours. */
+function greyOf(hex: string): number {
+  return Math.round(brightnessOf(channelsOf(hex) ?? [0, 0, 0]) * 255);
 }
 
 type Corner = readonly [number, number];
@@ -292,12 +289,22 @@ describe('accepted limits', () => {
 });
 
 describe('label printed in colour', () => {
-  // The labels are no longer black: each first name gets its own ink. zxing
-  // only sees brightness, so an ink is rendered here as the grey of the same
-  // brightness — that is exactly what reaches the decoder.
-  it.each(INKS.map(({ ink }) => ink))('decodes a %s label tilted 30°', async (ink) => {
+  // The labels are no longer black: the teacher picks a palette, and each first
+  // name gets its own ink out of it. zxing only sees brightness, so an ink is
+  // rendered here as the grey of the same brightness — that is exactly what
+  // reaches the decoder.
+  const inks = [...new Set(Object.values(PALETTES).flat())];
+
+  it.each(inks)('decodes a %s label tilted 30°', async (ink) => {
     await expect(
-      decodeQrCode(photograph({ ink: brightnessOf(ink), size: 300, tiltX: 30, tiltY: 15 })),
+      decodeQrCode(photograph({ ink: greyOf(ink), size: 300, tiltX: 30, tiltY: 15 })),
+    ).resolves.toBe(FIRST_NAME);
+  });
+
+  it('decodes a colour the teacher picked herself', async () => {
+    // Canary yellow, which readableInk brings down to a printable mustard.
+    await expect(
+      decodeQrCode(photograph({ ink: greyOf(readableInk('#ffe000')), size: 300, tiltX: 30 })),
     ).resolves.toBe(FIRST_NAME);
   });
 

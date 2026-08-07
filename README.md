@@ -111,13 +111,27 @@ Each label carries the QR code and the first name in plain text — handy for
 handing them out, and for checking by eye that the right label sits next to the
 right piece of work. The list is remembered in the browser.
 
-Each first name also gets a colour and a small mascot, both derived from the
+Each first name also gets a colour and a small drawing, both derived from the
 name itself: a child who cannot read yet still finds "the orange label with the
-fox", and the same child gets the same label again next term. The palette is
-deliberately dark — zxing thresholds on brightness, so a pastel code would stop
-being read; `photo-reading.test.ts` photographs every colour of the palette and
-checks it decodes. _Étiquettes en couleur_ can be unticked to print in plain
-black.
+fox", and the same child gets the same label again next term.
+
+**L'allure des étiquettes** sets the style of the whole sheet, and is remembered
+from one session to the next:
+
+| Setting          | Choices                                                                      |
+| ---------------- | ---------------------------------------------------------------------------- |
+| _Taille_         | 4, 3 or 2 labels per row                                                     |
+| _Couleurs_       | Arc-en-ciel, Océan, Bonbons, a single colour of your own, or plain black ink |
+| _Petits dessins_ | Animaux, Nature, Espace, or none                                             |
+
+The sheet is redrawn as soon as a setting changes — no need to generate again.
+
+Whatever is chosen, the ink stays dark: zxing thresholds on brightness, so a
+pastel code would stop being read. The three palettes are vetted colours below
+40 % of the brightness of white, and a colour picked by hand is darkened until
+it gets there — canary yellow prints as mustard, and the field shows the colour
+that will really be used. `photo-reading.test.ts` photographs every ink of every
+palette at a 30° tilt and checks the first name comes back.
 
 If there are two `Léa` in the class, write `Léa B` and `Léa M`.
 
@@ -190,7 +204,7 @@ fits in a few hundred lines.
 | `src/filing.ts`                  | numbering and free-name lookup — no DOM, no disk        |
 | `src/qr-decoding.ts`             | decoding a QR code — DOM-free, tested without a browser |
 | `src/qr-generation.ts`           | generating the label QR codes                           |
-| `src/label-theme.ts`             | colour and mascot of a label — DOM-free                 |
+| `src/label-theme.ts`             | palettes, drawings and label options — DOM-free         |
 | `src/photo-reading.ts`           | reading a photo: its QR code and its thumbnail          |
 | `src/dom.ts`                     | element lookup with a runtime type check                |
 | `src/photos.ts`, `src/labels.ts` | interface wiring                                        |
