@@ -54,7 +54,7 @@ const minifyHtml = (): Plugin => ({
 // repository, so it stays put even in a fork's own build, and it survives a
 // rename through GitHub's permanent redirect. That is the opposite of the footer
 // link a few lines down — same URL today, two different questions.
-const UPSTREAM = 'https://github.com/tetienne/qr-school';
+const UPSTREAM = 'https://github.com/tetienne/zou';
 
 const NOTICE = `/*! Zou | MIT | Copyright (c) 2026 Thibaut Etienne | ${UPSTREAM} */`;
 

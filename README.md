@@ -20,16 +20,15 @@ short enough to say out loud. It sits in the small caps line above each heading,
 where `Photos d'élèves` used to describe the app to someone who could already read
 the description underneath.
 
-Two things deliberately keep the old name `qr-school`, and neither is an
-oversight:
+Only one thing keeps the old name `qr-school`, and it is not an oversight: **the
+`localStorage` keys** (`qr-school.names`, `qr-school.label-options`,
+`qr-school.size`). They identify data already sitting in the teacher's browser.
+Renaming them empties her class list and resets the sheet style, with nothing on
+screen to explain why — a rename with a silent cost, for cosmetic gain.
 
-- **The `localStorage` keys** (`qr-school.names`, `qr-school.label-options`,
-  `qr-school.size`). They identify data already sitting in the teacher's browser.
-  Renaming them empties her class list and resets the sheet style, with nothing on
-  screen to explain why — a rename with a silent cost, for cosmetic gain.
-- **The URL in the MIT notice.** That one is attribution: it names the author's
-  repository, so it stays put even inside a fork's own build, and GitHub's
-  permanent redirect carries it through a rename.
+The `UPSTREAM` address in the MIT notice is attribution rather than provenance: it
+names the author's repository, so it stays put even inside a fork's own build,
+where the footer link does not.
 
 **The footer link is generated instead**, because it answers the other question —
 where does the page in front of me come from? GitHub Actions sets
@@ -42,11 +41,12 @@ someone else's changes. Vite's own `%VITE_*%` substitution would not do — it r
 `.env` files, and an unset variable is served as a literal `%VITE_SOURCE_URL%`
 inside an `href`.
 
-Which leaves **the repository itself**. Renaming it is one setting and needs no
-code change — `deploy.yml` derives `VITE_BASE` from
-`github.event.repository.name` — but it moves the site to
-`https://<user>.github.io/zou/`, and the old path does not follow. The teacher's
-bookmark has to be sent again. That, not the code, is what makes it a decision.
+**The repository is renamed too**, which took no code change — `deploy.yml` derives
+`VITE_BASE` from `github.event.repository.name`. What it does take is a deploy and
+a message: the site is now at `https://<user>.github.io/zou/`, the old path does
+not redirect, and a build made under the old name asks for its assets under
+`/qr-school/`, so the live site stays broken until `main` is deployed again. The
+teacher's bookmark has to be sent a second time.
 
 ---
 
@@ -92,7 +92,7 @@ plan B. Most of this code would carry over.
 3. `.github/workflows/deploy.yml` does the rest: on every push to `main` it
    checks types, runs the tests, builds the site and publishes it. Pull requests
    run the same checks without deploying.
-4. A minute later the site is at `https://<user>.github.io/qr-school/`.
+4. A minute later the site is at `https://<user>.github.io/zou/`.
 5. Send that address to the teacher and have her bookmark it on the desktop.
 
 The base path is derived from the repository name (`VITE_BASE`); locally
@@ -126,10 +126,10 @@ To check the base path without GitHub at all, build with it and serve the result
 from a matching subfolder:
 
 ```bash
-VITE_BASE=/qr-school/ npm run build
-mkdir -p /tmp/pages/qr-school && cp -r dist/* /tmp/pages/qr-school/
+VITE_BASE=/zou/ npm run build
+mkdir -p /tmp/pages/zou && cp -r dist/* /tmp/pages/zou/
 python3 -m http.server 8080 --directory /tmp/pages
-# then open http://localhost:8080/qr-school/
+# then open http://localhost:8080/zou/
 ```
 
 `http://localhost` counts as a secure context, so the folder picker works there
