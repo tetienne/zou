@@ -475,3 +475,22 @@ after any change to the size of a label.
 - The chosen folders are not remembered between sessions.
 - The native folder picker cannot be driven by an automated test: that part is
   only verified by hand.
+
+## License
+
+[MIT](LICENSE) — copy it, adapt it for another class, no questions asked. The
+point of the project is that a colleague can fork it and change the labels; a
+copyleft licence would only stand in the way of that, and there is no service
+to protect since everything runs in the teacher's browser.
+
+Two dependencies ship inside the built site and keep their own terms:
+
+| Bundled                                                                         | Licence    |
+| ------------------------------------------------------------------------------- | ---------- |
+| [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator)           | MIT        |
+| [zxing-wasm](https://github.com/Sec-ant/zxing-wasm) wrapper                     | MIT        |
+| [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp), inside `zxing_reader.wasm` | Apache-2.0 |
+
+Apache-2.0 is permissive and compatible with MIT, but unlike MIT it asks that
+its licence text travel with the binary — which is why `zxing_reader.wasm` is
+named here rather than left implicit in the lockfile.
