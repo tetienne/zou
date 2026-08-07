@@ -10,6 +10,7 @@ import {
   type MascotSet,
   type PaletteName,
 } from './label-theme';
+import { BOX, GAP, MASCOT_RATIO, PAGE, pages, printableArea, sheetLayout } from './label-layout';
 import { required } from './dom';
 
 const NAMES_STORAGE_KEY = 'qr-school.names';
@@ -65,8 +66,38 @@ function optionsChanged(): void {
   // darker, and seeing it beats discovering it on paper.
   colourRow.hidden = options.palette !== 'single';
   appliedColour.style.background = readableInk(options.colour);
-  sheet.className = `label-sheet sheet-${options.size}`;
+  showLayout(options.size);
   if (printedNames.length > 0) draw();
+}
+
+/**
+ * Hands the sheet's measurements to the stylesheet. Every length a label is
+ * made of comes from label-layout.ts, so what the page count was computed with
+ * and what the browser draws cannot drift apart.
+ */
+function showLayout(size: LabelSize): void {
+  const layout = sheetLayout(size);
+  const variables: Record<string, string> = {
+    '--paper-width': mm(printableArea().width),
+    '--paper-margin': mm(PAGE.margin),
+    '--label-gap': mm(GAP),
+    '--columns': String(layout.columns),
+    '--label-width': mm(layout.labelWidth),
+    '--label-height': mm(layout.labelHeight),
+    '--label-border': mm(BOX.border),
+    '--label-padding': mm(BOX.padding),
+    '--frame-padding': mm(BOX.framePadding),
+    '--caption-gap': mm(BOX.captionGap),
+    '--caption-height': mm(layout.captionHeight),
+    '--qr-size': mm(layout.qrSize),
+    '--name-size': mm(layout.nameSize),
+    '--mascot-size': mm(layout.nameSize * MASCOT_RATIO),
+  };
+  for (const [name, value] of Object.entries(variables)) sheet.style.setProperty(name, value);
+}
+
+function mm(length: number): string {
+  return `${String(Math.round(length * 100) / 100)}mm`;
 }
 
 function draw(): void {
@@ -84,15 +115,47 @@ function draw(): void {
     return;
   }
 
+  const cards: HTMLDivElement[] = [];
   for (const firstName of printedNames) {
     // The QR code only depends on the name: generated once, cloned for the
     // other copies.
     const svg = qrCodeSvg(firstName);
-    for (let i = 0; i < copies; i++) sheet.append(labelCard(firstName, svg, options));
+    for (let i = 0; i < copies; i++) cards.push(labelCard(firstName, svg, options));
   }
 
-  summary.textContent = `${printedNames.length} prénom(s) × ${copies} = ${printedNames.length * copies} étiquettes.`;
+  // Cutting the sheet into pages ourselves is what keeps the labels whole: the
+  // browser only has to break where we already broke.
+  const sheets = pages(cards, options.size);
+  sheets.forEach((page, index) => {
+    sheet.append(pageElement(page, index + 1, sheets.length));
+  });
+
+  const total = printedNames.length * copies;
+  summary.textContent =
+    `${String(printedNames.length)} prénom(s) × ${String(copies)} = ${String(total)} étiquettes, ` +
+    `sur ${String(sheets.length)} page(s) A4.`;
   printButton.disabled = false;
+}
+
+/**
+ * One page of the sheet, announced by its number: the teacher sees before
+ * printing what will come out of the printer, page by page.
+ */
+function pageElement(cards: HTMLDivElement[], number: number, total: number): HTMLElement {
+  const page = document.createElement('section');
+  page.className = 'sheet-page';
+
+  const caption = document.createElement('p');
+  caption.className = 'sheet-page-number no-print';
+  caption.textContent = `Page ${String(number)} sur ${String(total)}`;
+  page.append(caption);
+
+  const paper = document.createElement('div');
+  paper.className = 'sheet-paper';
+  paper.append(...cards);
+  page.append(paper);
+
+  return page;
 }
 
 function currentOptions(): LabelOptions {
