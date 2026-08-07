@@ -1,4 +1,4 @@
-# qr-school — filing pupils' artwork photos by QR code
+# Zou — filing pupils' artwork photos by QR code
 
 A small web app that automatically files photos of pupils' work. The teacher
 puts a QR label carrying the child's first name next to the work, photographs
@@ -10,6 +10,43 @@ processing happens in the browser.**
 
 The interface is in French because the user is a French primary school teacher.
 Everything else — code, identifiers, comments, tests, this file — is in English.
+
+## Name
+
+_Zou_ is the French « et zou, c'est rangé » — the sound of something put away in
+one gesture. It says nothing about what the app does, and that is the point: the
+page headings and the tab titles already say it, which leaves the name free to be
+short enough to say out loud. It sits in the small caps line above each heading,
+where `Photos d'élèves` used to describe the app to someone who could already read
+the description underneath.
+
+Only one thing keeps the old name `qr-school`, and it is not an oversight: **the
+`localStorage` keys** (`qr-school.names`, `qr-school.label-options`,
+`qr-school.size`). They identify data already sitting in the teacher's browser.
+Renaming them empties her class list and resets the sheet style, with nothing on
+screen to explain why — a rename with a silent cost, for cosmetic gain.
+
+The `UPSTREAM` address in the MIT notice is attribution rather than provenance: it
+names the author's repository, so it stays put even inside a fork's own build,
+where the footer link does not.
+
+**The footer link is generated instead**, because it answers the other question —
+where does the page in front of me come from? GitHub Actions sets
+`GITHUB_REPOSITORY` and `GITHUB_SERVER_URL` for every step of every job, so
+`sourceLink()` in `vite.config.ts` fills `%SOURCE_URL%` in the three pages from
+the environment, falling back to the upstream address for `npm run dev` and local
+builds. Two things follow for free: renaming the repository moves the link with
+it, and a fork's pages link to the fork instead of crediting this repository for
+someone else's changes. Vite's own `%VITE_*%` substitution would not do — it reads
+`.env` files, and an unset variable is served as a literal `%VITE_SOURCE_URL%`
+inside an `href`.
+
+**The repository is renamed too**, which took no code change — `deploy.yml` derives
+`VITE_BASE` from `github.event.repository.name`. What it does take is a deploy and
+a message: the site is now at `https://<user>.github.io/zou/`, the old path does
+not redirect, and a build made under the old name asks for its assets under
+`/qr-school/`, so the live site stays broken until `main` is deployed again. The
+teacher's bookmark has to be sent a second time.
 
 ---
 
@@ -55,7 +92,7 @@ plan B. Most of this code would carry over.
 3. `.github/workflows/deploy.yml` does the rest: on every push to `main` it
    checks types, runs the tests, builds the site and publishes it. Pull requests
    run the same checks without deploying.
-4. A minute later the site is at `https://<user>.github.io/qr-school/`.
+4. A minute later the site is at `https://<user>.github.io/zou/`.
 5. Send that address to the teacher and have her bookmark it on the desktop.
 
 The base path is derived from the repository name (`VITE_BASE`); locally
@@ -89,10 +126,10 @@ To check the base path without GitHub at all, build with it and serve the result
 from a matching subfolder:
 
 ```bash
-VITE_BASE=/qr-school/ npm run build
-mkdir -p /tmp/pages/qr-school && cp -r dist/* /tmp/pages/qr-school/
+VITE_BASE=/zou/ npm run build
+mkdir -p /tmp/pages/zou && cp -r dist/* /tmp/pages/zou/
 python3 -m http.server 8080 --directory /tmp/pages
-# then open http://localhost:8080/qr-school/
+# then open http://localhost:8080/zou/
 ```
 
 `http://localhost` counts as a secure context, so the folder picker works there

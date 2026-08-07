@@ -22,6 +22,9 @@ const supportsDirectories = supportsFolders();
 
 // --- Browser storage --------------------------------------------------------
 
+// The old name, kept on purpose — see the note in labels.ts. `names` is the
+// very key the labels page writes, which is how the class list reaches the
+// autocompletion here.
 const NAMES_STORAGE_KEY = 'qr-school.names';
 const SIZE_STORAGE_KEY = 'qr-school.size';
 
@@ -47,6 +50,9 @@ interface Row {
 }
 
 const firstNameOf = (row: Row): string => row.field.value.trim();
+
+/** French plural mark, for counts written into the interface. */
+const plural = (n: number): string => (n > 1 ? 's' : '');
 
 // An empty first name stays empty: `sanitiseForFileName` would return
 // "Sans-nom" and the row would get planned even though it must not be copied.
@@ -507,7 +513,6 @@ function refreshSummary(): void {
     else withoutName++;
   }
 
-  const plural = (n: number): string => (n > 1 ? 's' : '');
   const parts: string[] = [];
   if (ready) parts.push(`${ready} prête${plural(ready)} à copier`);
   if (withoutName) parts.push(`${withoutName} sans prénom`);
@@ -563,9 +568,12 @@ async function copyPhotos(): Promise<void> {
   }
 
   el.copyProgress.hidden = true;
+  // The app's name, said at the one moment it means something — the photos have
+  // just been put away. Not when something failed: « et zou, c'est rangé » over a
+  // report of losses would read as the app not having noticed.
   el.copyStatus.textContent = failed
-    ? `${copied} photo(s) copiée(s), ${failed} en échec.`
-    : `${copied} photo(s) copiée(s).`;
+    ? `${copied} photo${plural(copied)} copiée${plural(copied)}, ${failed} en échec.`
+    : `${copied} photo${plural(copied)} copiée${plural(copied)} — et zou, c'est rangé !`;
   refreshSummary();
   refreshCopyButton();
 }

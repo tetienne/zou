@@ -50,8 +50,13 @@ const minifyHtml = (): Plugin => ({
 //   - entry chunks only. One notice per page satisfies the licence; stamping the
 //     shared chunks as well would repeat it three times for nobody's benefit,
 //     and the text barely compresses — it is close to its own weight in gzip.
-const NOTICE =
-  '/*! qr-school | MIT | Copyright (c) 2026 Thibaut Etienne | https://github.com/tetienne/qr-school */';
+// The address below is attribution, not provenance: it names the author's
+// repository, so it stays put even in a fork's own build, and it survives a
+// rename through GitHub's permanent redirect. That is the opposite of the footer
+// link a few lines down — same URL today, two different questions.
+const UPSTREAM = 'https://github.com/tetienne/zou';
+
+const NOTICE = `/*! Zou | MIT | Copyright (c) 2026 Thibaut Etienne | ${UPSTREAM} */`;
 
 const legalNotice = (): Plugin => ({
   name: 'legal-notice',
@@ -63,9 +68,34 @@ const legalNotice = (): Plugin => ({
   },
 });
 
+// The footer link answers "where does the page I am looking at come from?", so
+// it is built rather than written down. GitHub Actions sets GITHUB_REPOSITORY and
+// GITHUB_SERVER_URL for every step of every job, which buys two things for free:
+// renaming the repository moves the link with it, and a fork's pages point at the
+// fork instead of crediting this repository for someone else's changes.
+//
+// Not Vite's own `%VITE_*%` substitution, which reads `.env` files: this value
+// comes from the CI environment, and an unset variable would be served to the
+// teacher as a literal `%VITE_SOURCE_URL%` in an `href`. Falling back to UPSTREAM
+// keeps `npm run dev` and a local build clickable.
+const { GITHUB_SERVER_URL, GITHUB_REPOSITORY } = process.env;
+const sourceUrl = GITHUB_REPOSITORY
+  ? `${GITHUB_SERVER_URL ?? 'https://github.com'}/${GITHUB_REPOSITORY}`
+  : UPSTREAM;
+
+const sourceLink = (): Plugin => ({
+  name: 'source-link',
+  // No `apply`: the dev server needs the substitution too.
+  transformIndexHtml: {
+    // Before minifyHtml, which runs 'post'.
+    order: 'pre',
+    handler: (html) => html.replaceAll('%SOURCE_URL%', sourceUrl),
+  },
+});
+
 export default defineConfig({
   base,
-  plugins: [tailwindcss(), minifyHtml(), legalNotice()],
+  plugins: [tailwindcss(), sourceLink(), minifyHtml(), legalNotice()],
   build: {
     outDir: 'dist',
     rollupOptions: {

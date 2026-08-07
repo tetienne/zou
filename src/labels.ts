@@ -13,6 +13,10 @@ import {
 import { BOX, GAP, MASCOT_RATIO, PAGE, pages, printableArea, sheetLayout } from './label-layout';
 import { required } from './dom';
 
+// The prefix is the app's old name, and it stays: it identifies data already
+// sitting in the teacher's browser, not the app. Renaming it would silently
+// empty her class list and reset the sheet style, with nothing on screen to say
+// why. Same reason in photos.ts.
 const NAMES_STORAGE_KEY = 'qr-school.names';
 const OPTIONS_STORAGE_KEY = 'qr-school.label-options';
 const MIN_COPIES = 1;
