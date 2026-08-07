@@ -15,31 +15,10 @@ import {
 } from './names';
 import { findFreeFileName, planFileNames, type PhotoEntry } from './filing';
 import { required } from './dom';
+import { directoryPicker as folderPicker, supportsFolders, type Directory } from './folder-access';
 
-// --- File System Access API -------------------------------------------------
-// Not typed by lib.dom, so we describe only what we use.
-
-interface PickerOptions {
-  id?: string;
-  mode?: 'read' | 'readwrite';
-}
-type DirectoryPicker = (options?: PickerOptions) => Promise<Directory>;
-
-interface Directory {
-  readonly name: string;
-  values(): AsyncIterable<{ kind: string; name: string; getFile(): Promise<File> }>;
-  getDirectoryHandle(name: string, options?: { create?: boolean }): Promise<Directory>;
-  getFileHandle(
-    name: string,
-    options?: { create?: boolean },
-  ): Promise<{
-    createWritable(): Promise<{ write(data: Blob): Promise<void>; close(): Promise<void> }>;
-  }>;
-}
-
-const directoryPicker = (window as unknown as { showDirectoryPicker?: DirectoryPicker })
-  .showDirectoryPicker;
-const supportsDirectories = typeof directoryPicker === 'function';
+const directoryPicker = folderPicker();
+const supportsDirectories = supportsFolders();
 
 // --- Browser storage --------------------------------------------------------
 
@@ -192,7 +171,7 @@ if (!supportsDirectories) {
   showWarning(
     'Ce navigateur ne sait pas écrire directement dans un dossier. Les photos renommées ' +
       'arriveront une par une dans votre dossier « Téléchargements ». Pour un rangement ' +
-      'automatique, utilisez Microsoft Edge ou Google Chrome.',
+      'automatique, utilisez Vivaldi, Brave, Google Chrome ou Microsoft Edge.',
   );
   el.chooseDestination.disabled = true;
   el.destinationName.textContent = 'dossier « Téléchargements »';
