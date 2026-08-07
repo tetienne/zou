@@ -91,7 +91,9 @@ function draw(): void {
     for (let i = 0; i < copies; i++) sheet.append(labelCard(firstName, svg, options));
   }
 
-  summary.textContent = `${printedNames.length} prénom(s) × ${copies} = ${printedNames.length * copies} étiquettes.`;
+  // Nothing to say once the sheet is there: it is on screen, and counting the
+  // labels back to the teacher tells her what she just typed.
+  summary.textContent = '';
   printButton.disabled = false;
 }
 
