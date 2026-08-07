@@ -62,6 +62,35 @@ The base path is derived from the repository name (`VITE_BASE`); locally
 `npm run dev` serves from the root. HTTPS is mandatory — the folder access API
 does not work over `file://` — and GitHub Pages provides it out of the box.
 
+### Trying a branch on the real site, without merging
+
+Pushes to `main` publish automatically; any other branch can be published on
+demand. In the **Actions** tab, pick _Verify and deploy_ → _Run workflow_ →
+select the branch. Pull requests never deploy on their own.
+
+Two things to know before doing it:
+
+- There is a **single Pages site**, so a manual run replaces whatever is online.
+  Fine while nothing is in the teacher's hands, less so afterwards.
+- GitHub gates it independently of the workflow: the `github-pages` environment
+  only accepts the default branch until the branch is allowed under
+  `Settings` → `Environments` → `github-pages` → _Deployment branches and tags_.
+  Without that the job fails with "Branch is not allowed to deploy to
+  github-pages".
+
+To check the base path without GitHub at all, build with it and serve the result
+from a matching subfolder:
+
+```bash
+VITE_BASE=/qr-school/ npm run build
+mkdir -p /tmp/pages/qr-school && cp -r dist/* /tmp/pages/qr-school/
+python3 -m http.server 8080 --directory /tmp/pages
+# then open http://localhost:8080/qr-school/
+```
+
+`http://localhost` counts as a secure context, so the folder picker works there
+just as it does over HTTPS.
+
 ---
 
 ## How the teacher uses it

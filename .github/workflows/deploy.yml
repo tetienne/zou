@@ -62,7 +62,7 @@ jobs:
           VITE_BASE: /${{ github.event.repository.name }}/
 
       - name: Prepare the Pages artifact
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -70,7 +70,16 @@ jobs:
   deploy:
     name: Publish
     needs: [quality, verify]
-    if: github.ref == 'refs/heads/main'
+    # Pushes to main publish automatically. Any other branch can be published
+    # on demand from the Actions tab ("Run workflow"), which is how a change is
+    # tried on the real site before merging. Pull requests never deploy on
+    # their own.
+    #
+    # There is only one Pages site, so a manual run REPLACES what is online.
+    # GitHub also gates this: the github-pages environment only accepts the
+    # default branch until the branch is added under
+    # Settings → Environments → github-pages → Deployment branches.
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       pages: write
