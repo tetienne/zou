@@ -73,13 +73,23 @@ of the photos in the folder, not the order the gallery displays them in.
 
 ## Browsers
 
-| Browser                                                   | Result                                                                                |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Any Chromium browser: Vivaldi, Brave, Chrome, Edge, Opera | everything works, files written straight into the chosen folder                       |
-| Firefox, Safari                                           | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
+| Browser                                           | Result                                                                                |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Chrome, Edge on a computer                        | everything works, files written straight into the chosen folder                       |
+| Firefox, Safari, Brave, and every phone or tablet | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
 
-The app says so itself: in a browser of the second row, the home page warns about
-Downloads and the filing page greys out the destination folder.
+Being Chromium is not the criterion, which is why the second row is longer than
+it looks. **Brave blocks the File System Access API on purpose** and has done
+since [brave-browser#11407][brave], so it lands in the Downloads row like Firefox
+— sending the teacher there, as the warning used to, only showed her the same
+warning again. No browser on a phone or a tablet has the picker either, Chromium
+or not. Other desktop forks (Vivaldi, Opera) generally do, but the app promises
+nothing it has not been run on.
+
+[brave]: https://github.com/brave/brave-browser/issues/11407
+
+The app says so itself: in a browser of the second row, the filing page warns
+about Downloads and greys out the destination folder.
 
 ## What it will not do
 
