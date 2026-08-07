@@ -1,6 +1,15 @@
 // Printable sheet of QR labels: one QR per first name, repeated n times.
+//
+// Alpine drives the page: `labelsPage` below holds the whole state, and
+// `labels.html` binds to it. The sheet is a getter over that state, so a style
+// change repaints it with nothing to call by hand. The QR codes and the theme
+// of each label are built here rather than in the markup, so what ends up in
+// the page stays something this file produced.
+
 import './style.css';
+import Alpine from 'alpinejs';
 import { qrCodeSvg } from './qr-generation';
+import { loadClassList, saveClassList, splitNames } from './class-list';
 import {
   DEFAULT_OPTIONS,
   labelTheme,
@@ -10,161 +19,169 @@ import {
   type MascotSet,
   type PaletteName,
 } from './label-theme';
-import { required } from './dom';
 
-const NAMES_STORAGE_KEY = 'qr-school.names';
 const OPTIONS_STORAGE_KEY = 'qr-school.label-options';
 const MIN_COPIES = 1;
 const MAX_COPIES = 60;
 
-const namesField = required('names', HTMLTextAreaElement);
-const copiesField = required('copies', HTMLInputElement);
-const paletteField = required('palette', HTMLSelectElement);
-const colourField = required('colour', HTMLInputElement);
-const colourRow = required('colour-row', HTMLParagraphElement);
-const appliedColour = required('colour-applied', HTMLSpanElement);
-const mascotsField = required('mascots', HTMLSelectElement);
-const sizeField = required('size', HTMLSelectElement);
-const sheet = required('sheet', HTMLDivElement);
-const summary = required('summary', HTMLParagraphElement);
-const printButton = required('print', HTMLButtonElement);
+const PALETTE_NAMES: readonly PaletteName[] = ['rainbow', 'ocean', 'candy', 'single', 'plain'];
+const MASCOT_SETS: readonly MascotSet[] = ['animals', 'nature', 'space', 'none'];
+const LABEL_SIZES: readonly LabelSize[] = ['small', 'medium', 'large'];
+const COLOUR = /^#[0-9a-f]{6}$/i;
 
-/** Names of the last generated sheet, so a style change redraws it at once. */
-let printedNames: string[] = [];
-
-namesField.value = localStorage.getItem(NAMES_STORAGE_KEY) ?? '';
-namesField.addEventListener('input', () => {
-  localStorage.setItem(NAMES_STORAGE_KEY, namesField.value);
-});
-
-showOptions(storedOptions());
-for (const field of [paletteField, colourField, mascotsField, sizeField]) {
-  // `input` rather than `change`: dragging through the colour wheel repaints
-  // the sheet live, which is the whole point of choosing a colour.
-  field.addEventListener('input', optionsChanged);
-}
-optionsChanged();
-
-required('generate', HTMLButtonElement).addEventListener('click', () => {
-  printedNames = namesField.value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
-  draw();
-});
-
-printButton.addEventListener('click', () => {
-  window.print();
-});
-
-function optionsChanged(): void {
-  const options = currentOptions();
-  localStorage.setItem(OPTIONS_STORAGE_KEY, JSON.stringify(options));
-  // The colour wheel only means something for the single-colour palette. Next
-  // to it, the colour the labels will really carry: a pale pick comes out
-  // darker, and seeing it beats discovering it on paper.
-  colourRow.hidden = options.palette !== 'single';
-  appliedColour.style.background = readableInk(options.colour);
-  sheet.className = `label-sheet sheet-${options.size}`;
-  if (printedNames.length > 0) draw();
+/** One label on the sheet, ready to display. */
+interface Label {
+  /** Position on the sheet: first names repeat, so they cannot be the key. */
+  id: number;
+  firstName: string;
+  svg: string;
+  /** `--ink` and `--tint`, which `.label-card` reads. */
+  style: string;
+  /** Empty when the drawings are turned off. */
+  mascot: string;
 }
 
-function draw(): void {
-  const copies = Math.max(
-    MIN_COPIES,
-    Math.min(MAX_COPIES, Number.parseInt(copiesField.value, 10) || MIN_COPIES),
-  );
-  const options = currentOptions();
-
-  sheet.textContent = '';
-
-  if (printedNames.length === 0) {
-    summary.textContent = 'Tapez au moins un prénom.';
-    printButton.disabled = true;
-    return;
-  }
-
-  for (const firstName of printedNames) {
-    // The QR code only depends on the name: generated once, cloned for the
-    // other copies.
-    const svg = qrCodeSvg(firstName);
-    for (let i = 0; i < copies; i++) sheet.append(labelCard(firstName, svg, options));
-  }
-
-  summary.textContent = `${printedNames.length} prénom(s) × ${copies} = ${printedNames.length * copies} étiquettes.`;
-  printButton.disabled = false;
-}
-
-function currentOptions(): LabelOptions {
-  return {
-    palette: paletteField.value as PaletteName,
-    colour: colourField.value,
-    mascots: mascotsField.value as MascotSet,
-    size: sizeField.value as LabelSize,
-  };
-}
-
-function showOptions(options: LabelOptions): void {
-  paletteField.value = options.palette;
-  mascotsField.value = options.mascots;
-  sizeField.value = options.size;
-  colourField.value = options.colour;
-
-  // A `<select>` given a value it does not offer ends up with nothing selected
-  // and an empty value, which no palette matches. Anything left over from an
-  // older version of the page therefore falls back to the first entry.
-  for (const field of [paletteField, mascotsField, sizeField]) {
-    if (field.selectedIndex === -1) field.selectedIndex = 0;
-  }
-  if (!/^#[0-9a-f]{6}$/i.test(colourField.value)) colourField.value = DEFAULT_OPTIONS.colour;
+function oneOf<T extends string>(allowed: readonly T[], value: unknown, fallback: T): T {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value)
+    ? (value as T)
+    : fallback;
 }
 
 /**
- * Choices of the previous session. Anything unreadable — an old version, a
- * hand-edited entry — falls back to the defaults rather than breaking the page.
+ * Choices of the previous session. Anything unreadable — an older version of
+ * the page, a hand-edited entry — falls back to the defaults rather than
+ * breaking the sheet: a `<select>` handed a value it does not offer would end
+ * up showing nothing at all.
  */
 function storedOptions(): LabelOptions {
+  let stored: Partial<LabelOptions> = {};
   try {
-    const stored: unknown = JSON.parse(localStorage.getItem(OPTIONS_STORAGE_KEY) ?? '{}');
-    if (typeof stored !== 'object' || stored === null) return DEFAULT_OPTIONS;
-    return { ...DEFAULT_OPTIONS, ...(stored as Partial<LabelOptions>) };
+    const raw: unknown = JSON.parse(localStorage.getItem(OPTIONS_STORAGE_KEY) ?? '{}');
+    if (typeof raw === 'object' && raw !== null) stored = raw;
   } catch {
     return DEFAULT_OPTIONS;
   }
+  return {
+    palette: oneOf(PALETTE_NAMES, stored.palette, DEFAULT_OPTIONS.palette),
+    colour:
+      typeof stored.colour === 'string' && COLOUR.test(stored.colour)
+        ? stored.colour
+        : DEFAULT_OPTIONS.colour,
+    mascots: oneOf(MASCOT_SETS, stored.mascots, DEFAULT_OPTIONS.mascots),
+    size: oneOf(LABEL_SIZES, stored.size, DEFAULT_OPTIONS.size),
+  };
 }
 
-function labelCard(firstName: string, svg: string, options: LabelOptions): HTMLDivElement {
-  const theme = labelTheme(firstName, options);
+function labelsPage() {
+  const initial = storedOptions();
 
-  const card = document.createElement('div');
-  card.className = 'label-card';
-  card.style.setProperty('--ink', theme.ink);
-  card.style.setProperty('--tint', theme.tint);
+  return {
+    names: loadClassList(),
+    /** Kept as typed: `<input type="number">` hands back a string. */
+    copies: '8',
 
-  const frame = document.createElement('div');
-  frame.className = 'label-qr';
-  // `svg` is built by us from the QR matrix, not from user input: only the
-  // first name is typed, and it goes through textContent just below.
-  frame.innerHTML = svg;
-  card.append(frame);
+    // --- The style of the whole sheet --------------------------------------
+    palette: initial.palette,
+    colour: initial.colour,
+    mascots: initial.mascots,
+    size: initial.size,
 
-  const caption = document.createElement('div');
-  caption.className = 'label-name';
+    /**
+     * The sheet the teacher asked for. Names and count are taken when she
+     * clicks « Générer » — typing a name does not redraw — while the style is
+     * live, which is the whole point of the panel.
+     */
+    printedNames: [] as string[],
+    printedCopies: MIN_COPIES,
+    asked: false,
 
-  if (theme.mascot) {
-    const mascot = document.createElement('span');
-    // Decoration only: a screen reader announcing « renard » before the name
-    // would help nobody.
-    mascot.setAttribute('aria-hidden', 'true');
-    mascot.className = 'label-mascot';
-    mascot.textContent = theme.mascot;
-    caption.append(mascot);
-  }
+    init(): void {
+      // `Alpine.effect` rather than the `$watch` magic: the magics only exist
+      // inside Alpine expressions, where `tsc` cannot follow, while the methods
+      // on the imported `Alpine` are typed.
+      //
+      // The class list is shared with the "Ranger les photos" page.
+      Alpine.effect(() => {
+        saveClassList(this.names);
+      });
+      Alpine.effect(() => {
+        localStorage.setItem(OPTIONS_STORAGE_KEY, JSON.stringify(this.options));
+      });
+    },
 
-  const name = document.createElement('span');
-  name.textContent = firstName;
-  caption.append(name);
+    get options(): LabelOptions {
+      return {
+        palette: this.palette,
+        colour: this.colour,
+        mascots: this.mascots,
+        size: this.size,
+      };
+    },
 
-  card.append(caption);
-  return card;
+    /**
+     * Only the size class: `x-bind:class` adds to the static `class`, it does
+     * not replace it, so leaving `sheet-medium` in the markup would keep it
+     * alongside the chosen one and let the later of the two rules win.
+     */
+    get sheetClass(): string {
+      return `sheet-${this.size}`;
+    },
+
+    /** The colour wheel only means something for the single-colour palette. */
+    get choosesColour(): boolean {
+      return this.palette === 'single';
+    },
+
+    /**
+     * The colour the labels will really carry: a pale pick comes out darker,
+     * and seeing it beats discovering it on paper.
+     */
+    get appliedColourStyle(): string {
+      return `background: ${readableInk(this.colour)}`;
+    },
+
+    get labels(): Label[] {
+      const options = this.options;
+      const sheet: Label[] = [];
+      let id = 0;
+
+      for (const firstName of this.printedNames) {
+        // The QR code only depends on the name: generated once, reused for the
+        // other copies.
+        const svg = qrCodeSvg(firstName);
+        const theme = labelTheme(firstName, options);
+        const style = `--ink: ${theme.ink}; --tint: ${theme.tint}`;
+        for (let copy = 0; copy < this.printedCopies; copy++) {
+          sheet.push({ id: id++, firstName, svg, style, mascot: theme.mascot });
+        }
+      }
+      return sheet;
+    },
+
+    get canPrint(): boolean {
+      return this.labels.length > 0;
+    },
+
+    get summary(): string {
+      if (!this.asked) return '';
+      if (this.printedNames.length === 0) return 'Tapez au moins un prénom.';
+      return `${this.printedNames.length} prénom(s) × ${this.printedCopies} = ${this.labels.length} étiquettes.`;
+    },
+
+    generate(): void {
+      this.printedNames = splitNames(this.names);
+      this.printedCopies = Math.max(
+        MIN_COPIES,
+        Math.min(MAX_COPIES, Number.parseInt(this.copies, 10) || MIN_COPIES),
+      );
+      this.asked = true;
+    },
+
+    print(): void {
+      window.print();
+    },
+  };
 }
+
+Alpine.data('labelsPage', labelsPage);
+Alpine.start();

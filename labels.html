@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" />
     <script type="module" src="/src/labels.ts"></script>
   </head>
-  <body class="px-4 pb-16">
+  <body class="px-4 pb-16" x-data="labelsPage">
     <header class="no-print mx-auto max-w-5xl border-b-2 border-slate-300 pt-6 pb-4">
       <p class="text-[0.8rem] font-semibold tracking-widest text-slate-500 uppercase">Photos d'élèves</p>
       <h1 class="mt-1 text-2xl font-bold">Créer les étiquettes</h1>
@@ -29,18 +29,21 @@
           rows="7"
           class="field min-h-36 w-full resize-y"
           placeholder="Léa&#10;Noé&#10;Camille&#10;Youssef"
+          x-model="names"
         ></textarea>
 
         <p class="my-3">
           <label for="copies">Nombre d'étiquettes par prénom :</label>
-          <input type="number" id="copies" value="8" min="1" max="60" class="field w-20" />
+          <input type="number" id="copies" value="8" min="1" max="60" class="field w-20" x-model="copies" />
         </p>
 
         <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="generate" class="button">Générer les étiquettes</button>
-          <button type="button" id="print" class="button-secondary" disabled>Imprimer</button>
+          <button type="button" class="button" x-on:click="generate()">Générer les étiquettes</button>
+          <button type="button" class="button-secondary" x-bind:disabled="!canPrint" x-on:click="print()">
+            Imprimer
+          </button>
         </div>
-        <p class="hint mt-3" id="summary" role="status"></p>
+        <p class="hint mt-3" role="status" x-text="summary"></p>
         <p class="hint mt-2">
           Cette liste est conservée dans votre navigateur : elle sera proposée automatiquement quand vous rangerez les
           photos.
@@ -57,7 +60,7 @@
         <div class="grid gap-3 sm:grid-cols-3">
           <p class="flex flex-col gap-1">
             <label for="size">Taille</label>
-            <select id="size" class="field">
+            <select id="size" class="field" x-model="size">
               <option value="small">Petites — 4 par ligne</option>
               <option value="medium">Moyennes — 3 par ligne</option>
               <option value="large">Grandes — 2 par ligne</option>
@@ -66,7 +69,7 @@
 
           <p class="flex flex-col gap-1">
             <label for="palette">Couleurs</label>
-            <select id="palette" class="field">
+            <select id="palette" class="field" x-model="palette">
               <option value="rainbow">Arc-en-ciel</option>
               <option value="ocean">Océan</option>
               <option value="candy">Bonbons</option>
@@ -77,7 +80,7 @@
 
           <p class="flex flex-col gap-1">
             <label for="mascots">Petits dessins</label>
-            <select id="mascots" class="field">
+            <select id="mascots" class="field" x-model="mascots">
               <option value="animals">Animaux</option>
               <option value="nature">Nature</option>
               <option value="space">Espace</option>
@@ -86,22 +89,43 @@
           </p>
         </div>
 
-        <p class="mt-3 flex items-center gap-2" id="colour-row" hidden>
+        <p class="mt-3 flex items-center gap-2" x-cloak x-show="choosesColour">
           <label for="colour">Couleur de la classe :</label>
           <!-- The baseline dataset still lists the colour picker as limited because of
                its `alpha` and `colorspace` refinements; the plain field it is used as
                here has been supported by every browser since Safari 16.4, and a browser
                without it simply shows a text field. -->
           <!-- eslint-disable-next-line @html-eslint/use-baseline -->
-          <input type="color" id="colour" class="field h-9 w-16 p-1" />
+          <input type="color" id="colour" class="field h-9 w-16 p-1" x-model="colour" />
           <span class="hint">
-            imprimée en <span class="colour-chip" id="colour-applied"></span> : une couleur trop claire est assombrie,
-            sinon le QR code ne se lit plus.
+            imprimée en <span class="colour-chip" x-bind:style="appliedColourStyle"></span> : une couleur trop claire
+            est assombrie, sinon le QR code ne se lit plus.
           </span>
         </p>
       </section>
 
-      <div class="label-sheet sheet-medium" id="sheet"></div>
+      <!--
+        One card per label. Keyed on its position, since a first name repeats.
+        `labels` hands over the QR code and the ink already resolved: no logic
+        lives here.
+      -->
+      <div class="label-sheet" x-bind:class="sheetClass">
+        <template x-for="label in labels" x-bind:key="label.id">
+          <div class="label-card" x-bind:style="label.style">
+            <div class="label-qr" x-html="label.svg"></div>
+            <div class="label-name">
+              <!--
+                Decoration only: a screen reader announcing « renard » before
+                the name would help nobody.
+              -->
+              <template x-if="label.mascot">
+                <span class="label-mascot" aria-hidden="true" x-text="label.mascot"></span>
+              </template>
+              <span x-text="label.firstName"></span>
+            </div>
+          </div>
+        </template>
+      </div>
     </main>
 
     <footer

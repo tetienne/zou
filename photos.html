@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" />
     <script type="module" src="/src/photos.ts"></script>
   </head>
-  <body class="px-4 pb-16">
+  <body class="px-4 pb-16" x-data="photosPage">
     <header class="mx-auto max-w-5xl border-b-2 border-slate-300 pt-6 pb-4">
       <p class="text-[0.8rem] font-semibold tracking-widest text-slate-500 uppercase">Photos d'élèves</p>
       <h1 class="mt-1 text-2xl font-bold">Ranger les photos</h1>
@@ -18,29 +18,37 @@
     </header>
 
     <main class="mx-auto max-w-5xl pt-4">
-      <div id="warning" role="status"></div>
+      <div role="status">
+        <template x-if="warning">
+          <div class="mb-4 rounded-lg bg-blue-50 px-4 py-3" x-text="warning"></div>
+        </template>
+      </div>
 
       <section class="step">
         <h2 class="mb-3 text-xl font-semibold">1. Les photos à ranger</h2>
         <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="choose-source" class="button">Choisir le dossier des photos</button>
-          <span class="font-mono text-[0.95rem] text-slate-500" id="source-name">aucun dossier choisi</span>
+          <button type="button" class="button" x-on:click="chooseSource($refs.fallbackSource)">
+            Choisir le dossier des photos
+          </button>
+          <span class="font-mono text-[0.95rem] text-slate-500" x-text="sourceLabel">aucun dossier choisi</span>
         </div>
       </section>
 
       <section class="step">
         <h2 class="mb-3 text-xl font-semibold">2. Où les ranger</h2>
         <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="choose-destination" class="button">Choisir le dossier de destination</button>
-          <span class="font-mono text-[0.95rem] text-slate-500" id="destination-name">aucun dossier choisi</span>
+          <button type="button" class="button" x-bind:disabled="!supportsDirectories" x-on:click="chooseDestination()">
+            Choisir le dossier de destination
+          </button>
+          <span class="font-mono text-[0.95rem] text-slate-500" x-text="destinationLabel">aucun dossier choisi</span>
         </div>
         <label class="mt-3 block">
-          <input type="checkbox" id="subfolders" checked class="align-middle" />
+          <input type="checkbox" class="align-middle" x-model="subfolders" x-bind:disabled="!supportsDirectories" />
           Créer un sous-dossier par prénom
         </label>
         <label class="mt-2 block" for="pattern">
           Nom des fichiers :
-          <select id="pattern" class="field">
+          <select id="pattern" class="field" x-model="pattern">
             <option value="name_date_num">Léa_2026-06-14_01.jpg</option>
             <option value="name_num">Léa_01.jpg</option>
             <option value="date_name_num">2026-06-14_Léa_01.jpg</option>
@@ -51,19 +59,27 @@
 
       <section class="step">
         <h2 class="mb-3 text-xl font-semibold">3. Lire les QR codes</h2>
-        <button type="button" id="scan" class="button" disabled>Analyser les photos</button>
-        <progress id="scan-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
-        <p class="hint mt-2" id="scan-status" role="status"></p>
+        <button type="button" class="button" x-bind:disabled="!canScan" x-on:click="scan()">Analyser les photos</button>
+        <progress
+          x-cloak
+          x-show="scanning"
+          x-bind:value="scanned"
+          x-bind:max="loaded.length"
+          value="0"
+          max="1"
+          class="mt-3 h-5 w-full"
+        ></progress>
+        <p class="hint mt-2" role="status" x-text="scanStatus"></p>
       </section>
 
-      <section class="step" id="results-block" hidden>
+      <section class="step" x-cloak x-show="scanning || scanDone">
         <h2 class="mb-1 text-xl font-semibold">4. Vérifier et copier</h2>
         <p class="hint mb-4">
           Sous chaque photo : le prénom, le nom que le fichier va prendre, et où il en est. Vous pouvez corriger un
           prénom en cliquant dessus. Une photo sans prénom n'est pas copiée.
         </p>
 
-        <div id="needs-attention" class="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-3" hidden>
+        <div x-cloak x-show="counts.toFix > 0" class="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-3">
           <p class="flex items-start gap-2 text-[1.05rem] font-semibold text-amber-900">
             <svg
               viewBox="0 0 24 24"
@@ -79,7 +95,7 @@
               <path d="M12 9v4"></path>
               <path d="M12 17h.01"></path>
             </svg>
-            <span id="needs-attention-text"></span>
+            <span x-text="needsAttentionText"></span>
           </p>
           <p class="mt-1 text-[0.95rem] text-amber-900">
             Elles sont placées au début de la galerie ci-dessous. Écrivez le prénom : la photo rejoint aussitôt les
@@ -88,9 +104,9 @@
         </div>
 
         <p
-          id="all-ready"
+          x-cloak
+          x-show="allReady"
           class="mb-4 flex items-center gap-2 rounded-xl border-2 border-green-700 bg-green-50 px-4 py-3 font-semibold text-green-900"
-          hidden
         >
           <svg
             viewBox="0 0 24 24"
@@ -109,33 +125,43 @@
         </p>
 
         <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="copy" class="button" disabled>Copier les photos</button>
-          <span id="copy-status" class="hint" role="status"></span>
+          <button type="button" class="button" x-bind:disabled="!canCopy" x-on:click="copy()" x-text="copyLabel">
+            Copier les photos
+          </button>
+          <span class="hint" role="status" x-text="copyStatus"></span>
         </div>
-        <progress id="copy-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
+        <progress
+          x-cloak
+          x-show="copying"
+          x-bind:value="copyDone"
+          x-bind:max="copyTotal"
+          value="0"
+          max="1"
+          class="mt-3 h-5 w-full"
+        ></progress>
 
         <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
-          <p id="summary" class="hint"></p>
+          <p class="hint" x-text="summary"></p>
           <fieldset class="flex flex-wrap items-center gap-2">
             <legend class="sr-only">Taille des photos</legend>
             <span class="hint">Taille des photos :</span>
             <div class="inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white">
               <label class="border-r border-slate-300">
-                <input type="radio" name="size" value="small" class="peer sr-only" />
+                <input type="radio" name="size" value="small" class="peer sr-only" x-model="size" />
                 <span
                   class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
                   >Petites</span
                 >
               </label>
               <label class="border-r border-slate-300">
-                <input type="radio" name="size" value="medium" class="peer sr-only" checked />
+                <input type="radio" name="size" value="medium" class="peer sr-only" x-model="size" />
                 <span
                   class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
                   >Moyennes</span
                 >
               </label>
               <label>
-                <input type="radio" name="size" value="large" class="peer sr-only" />
+                <input type="radio" name="size" value="large" class="peer sr-only" x-model="size" />
                 <span
                   class="block cursor-pointer px-3 py-1 text-[0.95rem] peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
                   >Grandes</span
@@ -145,7 +171,77 @@
           </fieldset>
         </div>
 
-        <div id="results" class="gallery gallery-medium"></div>
+        <!--
+          One card per photo. The gallery is keyed on the photo's id so that
+          re-sorting moves the existing cards instead of rebuilding them, and
+          `cards` hands over ready-made labels and classes: no logic lives here.
+        -->
+        <div class="gallery" x-bind:class="galleryClass">
+          <template x-for="card in cards" x-bind:key="card.row.id">
+            <article class="photo-card" x-bind:class="card.state.cardClass">
+              <div class="photo-card-image">
+                <template x-if="card.row.thumbnail">
+                  <img src="" alt="" loading="lazy" class="size-full object-contain" x-bind:src="card.row.thumbnail" />
+                </template>
+                <template x-if="!card.row.thumbnail">
+                  <p
+                    class="flex size-full flex-col items-center justify-center gap-2 px-3 text-center text-[0.85rem] text-slate-600"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      class="size-7 text-slate-500"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="m4.9 4.9 14.2 14.2"></path>
+                    </svg>
+                    Aperçu impossible
+                  </p>
+                </template>
+              </div>
+
+              <div class="flex flex-1 flex-col gap-2 border-t border-slate-200 p-3">
+                <!--
+                  The static `aria-label` is the pre-Alpine fallback; the bound
+                  one names the photo the field belongs to.
+                -->
+                <input
+                  type="text"
+                  class="field w-full text-[1.05rem]"
+                  placeholder="Prénom"
+                  autocomplete="off"
+                  list="known-names"
+                  aria-label="Prénom de l'élève"
+                  x-bind:value="card.row.firstName"
+                  x-bind:aria-label="`Prénom pour ${card.row.originalName}`"
+                  x-on:input="edit(card.row, $event)"
+                  x-on:change="commit(card.row, $el)"
+                />
+                <p x-bind:class="card.nameClass" x-text="card.nameLabel"></p>
+                <p class="status-badge" x-bind:class="card.state.badgeClass">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    class="size-4 shrink-0"
+                    x-html="card.state.icon"
+                  ></svg>
+                  <span x-text="card.state.label"></span>
+                </p>
+                <p class="mt-auto pt-1 text-[0.8rem] break-all text-slate-500" x-text="card.row.originalName"></p>
+              </div>
+            </article>
+          </template>
+        </div>
 
         <!--
           Class list offered as autocompletion under each field. `<datalist>` is
@@ -154,7 +250,11 @@
           exactly the intended fallback.
         -->
         <!-- eslint-disable @html-eslint/use-baseline -->
-        <datalist id="known-names"></datalist>
+        <datalist id="known-names">
+          <template x-for="firstName in knownNames" x-bind:key="firstName">
+            <option value="" x-bind:value="firstName"></option>
+          </template>
+        </datalist>
         <!-- eslint-enable @html-eslint/use-baseline -->
       </section>
     </main>
@@ -186,12 +286,13 @@
     <!-- eslint-disable @html-eslint/use-baseline -->
     <input
       type="file"
-      id="fallback-source"
+      x-ref="fallbackSource"
       webkitdirectory
       multiple
       accept="image/*"
       hidden
       aria-label="Dossier contenant les photos à ranger"
+      x-on:change="onFallbackFiles($event)"
     />
     <!-- eslint-enable @html-eslint/use-baseline -->
   </body>

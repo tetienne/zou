@@ -195,23 +195,48 @@ npm run preview       # serve dist/ to check the build
 ```
 
 TypeScript in strict mode (including `noUncheckedIndexedAccess`), Tailwind CSS 4
-through its Vite plugin, no UI framework: the DOM is driven directly and the app
-fits in a few hundred lines.
+through its Vite plugin, and **Alpine** (~15 kB) for the interface.
 
 | File                             | Role                                                    |
 | -------------------------------- | ------------------------------------------------------- |
 | `src/names.ts`                   | first names, extensions, output file names — DOM-free   |
 | `src/filing.ts`                  | numbering and free-name lookup — no DOM, no disk        |
+| `src/class-list.ts`              | the class list shared by the two pages — DOM-free       |
 | `src/qr-decoding.ts`             | decoding a QR code — DOM-free, tested without a browser |
 | `src/qr-generation.ts`           | generating the label QR codes                           |
 | `src/label-theme.ts`             | palettes, drawings and label options — DOM-free         |
 | `src/photo-reading.ts`           | reading a photo: its QR code and its thumbnail          |
-| `src/dom.ts`                     | element lookup with a runtime type check                |
-| `src/photos.ts`, `src/labels.ts` | interface wiring                                        |
+| `src/photos.ts`, `src/labels.ts` | page state and the actions the markup calls             |
 
-Business logic is deliberately kept away from the DOM: `names.ts` and `filing.ts`
-are tested without a browser, and `filing.ts` only touches the disk through an
-`exists` predicate that tests replace.
+Business logic is deliberately kept away from the DOM: `names.ts`, `filing.ts`,
+`class-list.ts` and `label-theme.ts` are tested without a browser, and
+`filing.ts` only touches the disk through an `exists` predicate that tests
+replace.
+
+### Why Alpine, and what it costs
+
+The page state lives in one object per page, registered with `Alpine.data`; the
+markup binds to it. Everything on screen is a getter over that state, so there
+is no "refresh the screen" step left to forget — the class of bug where a field
+is mutated and a `refreshSummary()` call is missed simply cannot happen any more.
+The gallery is an `x-for` keyed on the photo id, so re-sorting moves cards rather
+than rebuilding them.
+
+The cost is real and worth stating: **Alpine expressions are outside the reach of
+`tsc`**. A typo in `x-text="summry"` fails silently in the console, where the
+previous element lookup failed on load naming the culprit. Two rules keep that
+surface small:
+
+- the getters hand the template values it only has to display — labels, CSS
+  classes, booleans — so an `x-` expression is a bare property read and never a
+  computation;
+- inside TypeScript we call `Alpine.effect` and `Alpine.nextTick` rather than the
+  `$watch` / `$nextTick` magics, because the methods on the imported `Alpine`
+  are typed while the magics only exist inside expressions.
+
+**htmx was considered and rejected**: it swaps HTML fragments returned by a
+server, and this site has none. Everything happens locally — that is the point
+of the section above about the photos never leaving the machine.
 
 ## Language convention
 
@@ -325,6 +350,8 @@ upstream catches up.
 `npm test` covers, without a browser:
 
 - first names and output file names (accents, forbidden characters, patterns);
+- reading the class list: blank lines, and the repeats that must not turn into
+  duplicate autocompletion entries;
 - numbering, including a second pass over the same photos, which must continue
   at `_03` instead of overwriting `_01`;
 - **decoder robustness** on synthetic but realistic photos: the QR code is
@@ -341,7 +368,8 @@ One test also pins an **accepted limit** — beyond a 60° tilt nothing is decod
 If it ever starts passing, that is good news to notice, not a regression.
 
 What the tests do not cover, and has to be checked by hand: the native Windows
-folder picker, and real camera photos.
+folder picker, real camera photos, and the Alpine bindings — the expressions
+live in the HTML, so `npm test` and `tsc` both walk straight past them.
 
 ## Known limitations
 

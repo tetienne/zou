@@ -14,6 +14,14 @@
   [hidden] {
     display: none !important;
   }
+
+  /* Elements Alpine will hide as soon as it starts. Without this rule they
+     would flash on screen between the parsing of the page and that moment.
+     Alpine removes the attribute itself once the element is under its
+     control. */
+  [x-cloak] {
+    display: none !important;
+  }
 }
 
 @layer components {
