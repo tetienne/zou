@@ -86,15 +86,86 @@
     @apply inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.85rem] font-semibold;
   }
 
+  /* Colour the labels will really be printed in, next to the one picked. */
+  .colour-chip {
+    @apply inline-block size-3.5 rounded-sm border border-slate-400 align-middle;
+  }
+
   /* --- Printable label sheet --------------------------------------------- */
 
+  /* Three labels per row is the default; the teacher can ask for wider or
+     narrower ones. The gap is the pair of scissors' margin. */
+  .label-sheet {
+    @apply mt-4 grid gap-[4mm];
+  }
+
+  .sheet-small {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .sheet-medium {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sheet-large {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Colour comes from the first name and from the chosen palette (see
+     label-theme.ts); labels.ts sets `--ink` and `--tint` on each card. */
   .label-card {
-    @apply break-inside-avoid rounded border border-dashed border-slate-400 bg-white p-2 text-center;
+    @apply break-inside-avoid rounded-2xl border-2 border-dashed p-2 text-center;
+    border-color: var(--ink, #111827);
+    background: var(--tint, #ffffff);
+    /* Without this, browsers drop background colours when printing and the
+       label comes out on bare paper. */
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* White patch under the code: a QR read from a photo needs a light, even
+     background, so the tint stops at the frame. */
+  .label-qr {
+    @apply rounded-xl bg-white px-1.5 pt-1.5 pb-1;
+    color: var(--ink, #111827);
   }
 
   .label-card svg {
-    @apply mx-auto h-auto w-full;
-    max-width: 38mm;
+    @apply mx-auto block h-auto w-full;
+    max-width: 44mm;
+  }
+
+  .sheet-small .label-card svg {
+    max-width: 30mm;
+  }
+
+  .sheet-large .label-card svg {
+    max-width: 62mm;
+  }
+
+  .label-name {
+    @apply mt-1.5 flex items-center justify-center gap-1.5 text-[15pt] leading-tight font-extrabold break-words;
+    color: var(--ink, #111827);
+  }
+
+  .sheet-small .label-name {
+    @apply gap-1 text-[11pt];
+  }
+
+  .sheet-large .label-name {
+    @apply mt-2 gap-2 text-[21pt];
+  }
+
+  .label-mascot {
+    @apply text-[17pt] leading-none;
+  }
+
+  .sheet-small .label-mascot {
+    @apply text-[12pt];
+  }
+
+  .sheet-large .label-mascot {
+    @apply text-[24pt];
   }
 }
 

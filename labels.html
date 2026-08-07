@@ -47,7 +47,61 @@
         </p>
       </section>
 
-      <div class="mt-4 grid grid-cols-3 gap-[4mm]" id="sheet"></div>
+      <section class="step no-print">
+        <h2 class="mb-1 text-xl font-semibold">L'allure des étiquettes</h2>
+        <p class="hint mb-3">
+          Ces réglages valent pour toute la planche et sont conservés d'une fois sur l'autre. Chaque prénom garde sa
+          couleur et son dessin : l'enfant retrouve son étiquette sans savoir lire.
+        </p>
+
+        <div class="grid gap-3 sm:grid-cols-3">
+          <p class="flex flex-col gap-1">
+            <label for="size">Taille</label>
+            <select id="size" class="field">
+              <option value="small">Petites — 4 par ligne</option>
+              <option value="medium">Moyennes — 3 par ligne</option>
+              <option value="large">Grandes — 2 par ligne</option>
+            </select>
+          </p>
+
+          <p class="flex flex-col gap-1">
+            <label for="palette">Couleurs</label>
+            <select id="palette" class="field">
+              <option value="rainbow">Arc-en-ciel</option>
+              <option value="ocean">Océan</option>
+              <option value="candy">Bonbons</option>
+              <option value="single">Une seule couleur</option>
+              <option value="plain">Noir — économise l'encre</option>
+            </select>
+          </p>
+
+          <p class="flex flex-col gap-1">
+            <label for="mascots">Petits dessins</label>
+            <select id="mascots" class="field">
+              <option value="animals">Animaux</option>
+              <option value="nature">Nature</option>
+              <option value="space">Espace</option>
+              <option value="none">Aucun</option>
+            </select>
+          </p>
+        </div>
+
+        <p class="mt-3 flex items-center gap-2" id="colour-row" hidden>
+          <label for="colour">Couleur de la classe :</label>
+          <!-- The baseline dataset still lists the colour picker as limited because of
+               its `alpha` and `colorspace` refinements; the plain field it is used as
+               here has been supported by every browser since Safari 16.4, and a browser
+               without it simply shows a text field. -->
+          <!-- eslint-disable-next-line @html-eslint/use-baseline -->
+          <input type="color" id="colour" class="field h-9 w-16 p-1" />
+          <span class="hint">
+            imprimée en <span class="colour-chip" id="colour-applied"></span> : une couleur trop claire est assombrie,
+            sinon le QR code ne se lit plus.
+          </span>
+        </p>
+      </section>
+
+      <div class="label-sheet sheet-medium" id="sheet"></div>
     </main>
 
     <footer
