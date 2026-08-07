@@ -1,8 +1,9 @@
 # Working in this repository
 
-`README.md` is the reference: how the teacher uses the app, how it is deployed,
-and what each file does. Read it before a first change. What follows is only
-what an agent gets wrong without being told.
+`README.md` is written for whoever uses or hosts the app: what the teacher does
+with it, which browsers work, what it deliberately will not do. Read it before a
+first change — the behaviour it describes is the specification. What follows is
+only what an agent gets wrong without being told.
 
 ## Commits and pull requests
 
@@ -26,9 +27,33 @@ docs: explain the label palette
 ## Language
 
 Code is English, the interface is French — the user is a French primary school
-teacher. Identifiers, comments, tests, HTML `id`s and CSS class names in
-English; everything she can read in French. See _Language convention_ in the
-README for the exact boundary.
+teacher. The boundary runs exactly here:
+
+- identifiers, comments, commit messages, test names, HTML `id`s and CSS class
+  names are English;
+- every string she can read stays French — page copy, button labels,
+  `aria-label`s, placeholders, status messages, and the `Sans-nom` fallback that
+  ends up in a file name;
+- French stays where it is behaviour rather than prose: `<html lang="fr">`,
+  `localeCompare(…, 'fr')`, and the French keys `extractFirstName` accepts
+  (`prenom=`, `nom=`), because that is what a French label generator emits.
+
+The `localStorage` keys keep the project's old name (`qr-school.names`,
+`qr-school.label-options`, `qr-school.size`). They point at data already in the
+teacher's browser; renaming them would silently empty her class list.
+
+## Where things live
+
+One module per idea, named after it, and the module boundary follows what a test
+can reach: names, file names, numbering, palettes and sheet geometry are plain
+functions with no DOM and no disk, and `photos.ts` and `labels.ts` are the only
+files that know about elements. Keep it that way — the disk is reached through an
+`exists` predicate a test can replace, not through a handle passed down the call
+stack.
+
+Never branch on a browser name. What separates Chromium from Firefox and Safari
+here is one capability, `showDirectoryPicker`, and `folder-access.ts` is the only
+place that asks.
 
 ## Before saying it works
 
@@ -58,6 +83,10 @@ the two fakes in `tests/fake-folders.ts` — a source drawing its photos from th
 same QR matrix the label page uses, and a destination recording what it received.
 Nothing binary is committed, and a test label stays one the app would print.
 Judging the decoder is not their job; `photo-reading.test.ts` owns that.
+
+Three things no suite here covers, so a change touching them is only ever
+verified by hand: the native Windows folder picker, the download fallback for
+browsers without folder access, and real camera photos.
 
 ## The one constraint that breaks the app silently
 
