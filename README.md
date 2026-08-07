@@ -93,16 +93,23 @@ Page **Ranger les photos** :
 
 1. _Choisir le dossier des photos_ → le dossier de la carte SD ou du téléphone.
 2. _Choisir le dossier de destination_ → par exemple `Documents\Travaux 2026`.
-3. _Analyser les photos_ → chaque QR code est lu, un tableau s'affiche avec la
-   vignette, le prénom trouvé et le futur nom de fichier.
-4. Corriger éventuellement les prénoms manquants (surlignés en jaune) : soit en
-   tapant dans la case, soit avec le bouton _Compléter les vides avec le prénom
-   du dessus_ — pratique quand plusieurs photos du même enfant se suivent.
+3. _Analyser les photos_ → chaque QR code est lu, puis une galerie s'affiche :
+   une carte par photo, avec l'image, le prénom trouvé, le nom que le fichier va
+   prendre et son état.
+4. Corriger les prénoms manquants. Les photos concernées **remontent en tête de
+   la galerie** et portent une bordure épaisse : ce sont les seules qui
+   demandent quelque chose. Un bandeau en annonce le nombre. Dès qu'un prénom
+   est écrit, la carte rejoint les autres.
 5. _Copier les photos_.
+
+Le champ prénom propose la liste de la classe en autocomplétion, reprise de la
+page des étiquettes. La taille des photos est réglable — Petites, Moyennes,
+Grandes — et le choix est mémorisé d'une semaine sur l'autre.
 
 Les photos d'origine ne sont **ni modifiées ni supprimées**, uniquement copiées.
 Relancer le rangement deux fois n'écrase rien : la numérotation reprend à la
-suite.
+suite. Attention : elle suit l'ordre des photos, pas l'ordre d'affichage — une
+carte remontée en tête garde le numéro correspondant à sa place dans le dossier.
 
 ---
 
@@ -157,8 +164,8 @@ disque qu'à travers un prédicat `existe` qu'on remplace en test.
 l'étiquette, il est _contenu_ dans le QR code. Il n'y a donc ni OCR, ni
 Tesseract, ni modèle de vision — c'est ce qui rend le projet fiable et léger.
 Le repli quand la lecture échoue n'est pas un second algorithme : c'est la
-maîtresse qui corrige la case dans le tableau, avec le bouton « compléter les
-vides avec le prénom du dessus » pour les séries.
+maîtresse qui écrit le prénom sur la carte, aidée par l'autocomplétion depuis la
+liste de la classe.
 
 ### Le décodeur : zxing-wasm, et pourquoi pas les plus populaires
 

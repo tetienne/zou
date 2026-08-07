@@ -1,5 +1,5 @@
 // Page « Ranger les photos » : lecture des QR codes d'un dossier, vérification
-// dans un tableau, puis copie renommée vers le dossier de destination.
+// dans une galerie, puis copie renommée vers le dossier de destination.
 
 import './style.css';
 import { lirePhoto } from './lecture-qr';
@@ -40,6 +40,11 @@ const selecteurDossier = (window as unknown as { showDirectoryPicker?: Selecteur
   .showDirectoryPicker;
 const supporteDossiers = typeof selecteurDossier === 'function';
 
+// --- Mémoire du navigateur --------------------------------------------------
+
+const CLE_PRENOMS = 'qr-school.prenoms';
+const CLE_TAILLE = 'qr-school.taille';
+
 // --- État -------------------------------------------------------------------
 
 interface Ligne {
@@ -47,10 +52,12 @@ interface Ligne {
   readonly nomOrigine: string;
   readonly date: string;
   readonly ext: string;
+  /** Faux pour les HEIC/HEIF : le navigateur ne sait pas les afficher. */
+  readonly lisible: boolean;
   readonly champ: HTMLInputElement;
-  readonly tr: HTMLTableRowElement;
-  readonly tdCible: HTMLTableCellElement;
-  readonly tdEtat: HTMLTableCellElement;
+  readonly carte: HTMLElement;
+  readonly zoneNom: HTMLParagraphElement;
+  readonly zoneEtat: HTMLParagraphElement;
   statut: 'ok' | 'manquant' | 'erreur';
   numero: number;
   nomCible: string;
@@ -86,17 +93,98 @@ const el = {
   sousDossiers: requis('sous-dossiers', HTMLInputElement),
   modele: requis('modele', HTMLSelectElement),
   analyser: requis('analyser', HTMLButtonElement),
-  remplir: requis('remplir', HTMLButtonElement),
   progression: requis('progression', HTMLProgressElement),
   etatAnalyse: requis('etat-analyse', HTMLParagraphElement),
   blocResultats: requis('bloc-resultats', HTMLElement),
-  resultats: requis('resultats', HTMLTableSectionElement),
+  resultats: requis('resultats', HTMLDivElement),
+  aCorriger: requis('a-corriger', HTMLDivElement),
+  aCorrigerTexte: requis('a-corriger-texte', HTMLSpanElement),
+  toutPret: requis('tout-pret', HTMLParagraphElement),
+  recapitulatif: requis('recapitulatif', HTMLParagraphElement),
+  prenomsConnus: requis('prenoms-connus', HTMLDataListElement),
   copier: requis('copier', HTMLButtonElement),
   etatCopie: requis('etat-copie', HTMLSpanElement),
   progressionCopie: requis('progression-copie', HTMLProgressElement),
 };
 
 const modeleChoisi = (): Modele => el.modele.value as Modele;
+
+// --- Petites icônes (jamais la couleur seule) -------------------------------
+
+const CHEMINS: Record<string, string> = {
+  pret: '<path d="m20 6-11 11-5-5"/>',
+  alerte:
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>' +
+    '<path d="M12 9v4"/><path d="M12 17h.01"/>',
+  interdit: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+  copiee: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+};
+
+function icone(nom: string, classe: string): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', classe);
+  svg.innerHTML = CHEMINS[nom] ?? '';
+  return svg;
+}
+
+// --- Taille des photos (mémorisée d'une semaine sur l'autre) ----------------
+
+const CLASSES_TAILLE: Record<string, string> = {
+  petites: 'galerie-petites',
+  moyennes: 'galerie-moyennes',
+  grandes: 'galerie-grandes',
+};
+
+const radiosTaille = [...document.querySelectorAll<HTMLInputElement>('input[name="taille"]')];
+
+function appliqueTaille(valeur: string): void {
+  el.resultats.className = `galerie ${CLASSES_TAILLE[valeur] ?? 'galerie-moyennes'}`;
+}
+
+const tailleMemorisee = localStorage.getItem(CLE_TAILLE) ?? '';
+const taille = radiosTaille.some((radio) => radio.value === tailleMemorisee)
+  ? tailleMemorisee
+  : 'moyennes';
+
+for (const radio of radiosTaille) {
+  radio.checked = radio.value === taille;
+  radio.addEventListener('change', () => {
+    if (!radio.checked) return;
+    localStorage.setItem(CLE_TAILLE, radio.value);
+    appliqueTaille(radio.value);
+  });
+}
+appliqueTaille(taille);
+
+// --- Prénoms proposés : la classe d'abord, puis ceux lus sur les photos -----
+
+function majPrenomsConnus(): void {
+  const classe = (localStorage.getItem(CLE_PRENOMS) ?? '')
+    .split('\n')
+    .map((ligne) => ligne.trim())
+    .filter(Boolean);
+  const lus = lignes.map(prenomDe).filter(Boolean);
+
+  const vus = new Set<string>();
+  el.prenomsConnus.textContent = '';
+  for (const prenom of [...classe, ...lus]) {
+    const cle = prenom.toLocaleLowerCase('fr');
+    if (vus.has(cle)) continue;
+    vus.add(cle);
+    const option = document.createElement('option');
+    option.value = prenom;
+    el.prenomsConnus.append(option);
+  }
+}
+
+majPrenomsConnus();
 
 // --- Démarrage --------------------------------------------------------------
 
@@ -123,7 +211,6 @@ el.sourceSecours.addEventListener('change', () => {
   );
 });
 el.analyser.addEventListener('click', () => void analyser());
-el.remplir.addEventListener('click', remplirLesVides);
 el.copier.addEventListener('click', () => void copier());
 el.modele.addEventListener('change', recalculerNoms);
 el.sousDossiers.addEventListener('change', recalculerNoms);
@@ -176,6 +263,9 @@ function chargerFichiers(trouves: { file: File; nomOrigine: string }[], nomDossi
   analyseFaite = false;
   el.resultats.textContent = '';
   el.blocResultats.hidden = true;
+  el.aCorriger.hidden = true;
+  el.toutPret.hidden = true;
+  el.recapitulatif.textContent = '';
   el.nomSource.textContent = `${nomDossier} — ${trouves.length} photo(s)`;
   el.analyser.disabled = trouves.length === 0;
   el.etatAnalyse.textContent = trouves.length === 0 ? 'Aucune image trouvée dans ce dossier.' : '';
@@ -224,14 +314,15 @@ async function analyser(): Promise<void> {
 
   el.progression.hidden = true;
   el.analyser.disabled = false;
-  el.remplir.disabled = false;
   analyseFaite = true;
   el.etatAnalyse.textContent = `${trouves} prénom(s) reconnu(s) sur ${fichiers.length} photo(s).`;
+  majPrenomsConnus();
   recalculerNoms();
+  trier();
   majBoutonCopier();
 }
 
-// --- Tableau ----------------------------------------------------------------
+// --- Galerie ----------------------------------------------------------------
 
 function creerLigne(
   fichier: File,
@@ -240,45 +331,60 @@ function creerLigne(
   vignette: string,
   statut: Ligne['statut'],
 ): Ligne {
-  const tr = document.createElement('tr');
-  tr.className = 'border-b border-slate-200';
+  const carte = document.createElement('article');
+  carte.className = 'carte-photo';
 
-  const tdVignette = cellule('px-2 py-1');
+  const zoneImage = document.createElement('div');
+  zoneImage.className = 'carte-photo-image';
   if (vignette) {
     const img = document.createElement('img');
     img.src = vignette;
     img.alt = '';
-    img.className = 'size-16 rounded object-cover bg-slate-200';
-    tdVignette.append(img);
+    img.loading = 'lazy';
+    img.className = 'size-full object-contain';
+    zoneImage.append(img);
+  } else {
+    const vide = document.createElement('p');
+    vide.className =
+      'flex size-full flex-col items-center justify-center gap-2 px-3 text-center ' +
+      'text-[0.85rem] text-slate-600';
+    vide.append(icone('interdit', 'size-7 text-slate-500'), 'Aperçu impossible');
+    zoneImage.append(vide);
   }
 
-  const tdOrigine = cellule('px-2 py-1 text-[0.85rem] break-all text-slate-500');
-  tdOrigine.textContent = nomOrigine;
+  const bas = document.createElement('div');
+  bas.className = 'flex flex-1 flex-col gap-2 border-t border-slate-200 p-3';
 
-  const tdPrenom = cellule('px-2 py-1');
   const champ = document.createElement('input');
   champ.type = 'text';
   champ.value = prenom;
-  champ.size = 14;
-  champ.className = 'champ';
+  champ.placeholder = 'Prénom';
+  champ.autocomplete = 'off';
+  champ.className = 'champ w-full text-[1.05rem]';
+  champ.setAttribute('list', 'prenoms-connus');
   champ.setAttribute('aria-label', `Prénom pour ${nomOrigine}`);
-  tdPrenom.append(champ);
 
-  const tdCible = cellule('px-2 py-1 font-mono text-[0.85rem] break-all');
-  const tdEtat = cellule('px-2 py-1');
+  const zoneNom = document.createElement('p');
+  const zoneEtat = document.createElement('p');
 
-  tr.append(tdVignette, tdOrigine, tdPrenom, tdCible, tdEtat);
-  el.resultats.append(tr);
+  const origine = document.createElement('p');
+  origine.className = 'mt-auto pt-1 text-[0.8rem] break-all text-slate-500';
+  origine.textContent = nomOrigine;
+
+  bas.append(champ, zoneNom, zoneEtat, origine);
+  carte.append(zoneImage, bas);
+  el.resultats.append(carte);
 
   const ligne: Ligne = {
     fichier,
     nomOrigine,
     date: dateDuFichier(fichier.lastModified),
     ext: extension(nomOrigine),
+    lisible: estLisible(nomOrigine),
     champ,
-    tr,
-    tdCible,
-    tdEtat,
+    carte,
+    zoneNom,
+    zoneEtat,
     statut,
     numero: 1,
     nomCible: '',
@@ -291,14 +397,11 @@ function creerLigne(
     recalculerNoms();
     majBoutonCopier();
   });
+  // Le reclassement attend la fin de la saisie : déplacer la carte à chaque
+  // lettre ferait sauter la photo sous les doigts de la maîtresse.
+  champ.addEventListener('change', trier);
 
   return ligne;
-}
-
-function cellule(classe: string): HTMLTableCellElement {
-  const td = document.createElement('td');
-  td.className = classe;
-  return td;
 }
 
 function recalculerNoms(): void {
@@ -309,44 +412,132 @@ function recalculerNoms(): void {
     ligne.nomCible = plan?.nom ?? '';
     afficheLigne(ligne);
   }
+  majRecapitulatif();
 }
 
 function afficheLigne(ligne: Ligne): void {
   const dossier =
     el.sousDossiers.checked && ligne.nomCible ? `${nettoiePourFichier(prenomDe(ligne))}\\` : '';
-  ligne.tdCible.textContent = ligne.nomCible ? dossier + ligne.nomCible : '—';
 
-  ligne.tr.classList.toggle('bg-amber-50', !ligne.copiee && ligne.statut === 'manquant');
-  ligne.tr.classList.toggle('bg-red-50', ligne.statut === 'erreur');
-
-  const [texte, classe] = etatLigne(ligne);
-  ligne.tdEtat.textContent = texte;
-  ligne.tdEtat.className = `px-2 py-1 ${classe}`;
-}
-
-function etatLigne(ligne: Ligne): [string, string] {
-  if (ligne.copiee) return ['copiée', 'text-green-700'];
-  if (ligne.statut === 'erreur') {
-    return estImage(ligne.nomOrigine) && !estLisible(ligne.nomOrigine)
-      ? ['format HEIC non lisible', 'text-red-700']
-      : ['photo illisible', 'text-red-700'];
+  if (ligne.nomCible) {
+    ligne.zoneNom.className = 'font-mono text-[0.85rem] break-all text-slate-700';
+    ligne.zoneNom.textContent = dossier + ligne.nomCible;
+  } else {
+    ligne.zoneNom.className = 'text-[0.85rem] text-amber-900';
+    ligne.zoneNom.textContent = 'Pas encore de nom de fichier';
   }
-  if (ligne.statut === 'manquant') return ['QR non trouvé', 'text-amber-700'];
-  return ['prêt', ''];
+
+  const etat = etatLigne(ligne);
+  ligne.carte.className = `carte-photo ${etat.carte}`.trim();
+  ligne.zoneEtat.className = `etat-pastille ${etat.pastille}`;
+  ligne.zoneEtat.textContent = '';
+  ligne.zoneEtat.append(icone(etat.icone, 'size-4 shrink-0'), etat.texte);
 }
 
-function remplirLesVides(): void {
-  let dernier = '';
-  for (const ligne of lignes) {
-    if (prenomDe(ligne)) {
-      dernier = prenomDe(ligne);
-    } else if (dernier && ligne.statut !== 'erreur') {
-      ligne.champ.value = dernier;
-      ligne.statut = 'ok';
+interface Etat {
+  texte: string;
+  icone: string;
+  pastille: string;
+  carte: string;
+}
+
+function etatLigne(ligne: Ligne): Etat {
+  if (ligne.copiee) {
+    return {
+      texte: 'Copiée',
+      icone: 'copiee',
+      pastille: 'bg-green-100 text-green-900',
+      carte: 'carte-photo-copiee',
+    };
+  }
+  if (!prenomDe(ligne)) {
+    if (!ligne.lisible || ligne.statut === 'erreur') {
+      return {
+        texte: ligne.lisible ? 'Photo illisible' : 'Format HEIC, non lisible',
+        icone: 'interdit',
+        pastille: 'bg-red-100 text-red-900',
+        carte: 'carte-photo-erreur',
+      };
     }
+    return {
+      texte: 'QR non trouvé',
+      icone: 'alerte',
+      pastille: 'bg-amber-100 text-amber-900',
+      carte: 'carte-photo-alerte',
+    };
   }
-  recalculerNoms();
-  majBoutonCopier();
+  if (ligne.statut === 'erreur' && ligne.lisible) {
+    return {
+      texte: 'Copie impossible',
+      icone: 'interdit',
+      pastille: 'bg-red-100 text-red-900',
+      carte: 'carte-photo-erreur',
+    };
+  }
+  return {
+    texte: 'Prêt à copier',
+    icone: 'pret',
+    pastille: 'bg-slate-200 text-slate-800',
+    carte: '',
+  };
+}
+
+/**
+ * Les photos sans prénom passent en tête : ce sont les seules qui demandent
+ * quelque chose à la maîtresse. L'ordre d'origine est conservé à l'intérieur
+ * de chaque groupe, et `lignes` n'est jamais réordonné (la numérotation suit
+ * l'ordre des photos, pas l'ordre d'affichage).
+ */
+function trier(): void {
+  const ordre = [
+    ...lignes.filter((ligne) => !prenomDe(ligne)),
+    ...lignes.filter((ligne) => prenomDe(ligne)),
+  ];
+  if (ordre.every((ligne, index) => el.resultats.children[index] === ligne.carte)) return;
+
+  const actif = document.activeElement;
+  const champActif = actif instanceof HTMLInputElement ? actif : null;
+  const curseur = champActif?.selectionStart ?? null;
+
+  for (const ligne of ordre) el.resultats.append(ligne.carte);
+
+  if (champActif?.isConnected) {
+    champActif.focus();
+    if (curseur !== null) champActif.setSelectionRange(curseur, curseur);
+  }
+}
+
+function majRecapitulatif(): void {
+  let pretes = 0;
+  let sansPrenom = 0;
+  let illisibles = 0;
+  let copiees = 0;
+
+  for (const ligne of lignes) {
+    if (ligne.copiee) copiees++;
+    else if (prenomDe(ligne)) pretes++;
+    else if (!ligne.lisible || ligne.statut === 'erreur') illisibles++;
+    else sansPrenom++;
+  }
+
+  const s = (n: number): string => (n > 1 ? 's' : '');
+  const morceaux: string[] = [];
+  if (pretes) morceaux.push(`${pretes} prête${s(pretes)} à copier`);
+  if (sansPrenom) morceaux.push(`${sansPrenom} sans prénom`);
+  if (illisibles) morceaux.push(`${illisibles} illisible${s(illisibles)}`);
+  if (copiees) morceaux.push(`${copiees} copiée${s(copiees)}`);
+
+  el.recapitulatif.textContent = lignes.length
+    ? `${lignes.length} photo${s(lignes.length)} : ${morceaux.join(' · ')}`
+    : '';
+
+  const aCorriger = sansPrenom + illisibles;
+  el.aCorriger.hidden = aCorriger === 0;
+  el.aCorrigerTexte.textContent =
+    aCorriger === 1
+      ? '1 photo n’a pas encore de prénom.'
+      : `${aCorriger} photos n’ont pas encore de prénom.`;
+  el.toutPret.hidden = !analyseFaite || aCorriger > 0 || lignes.length === 0;
 }
 
 function majBoutonCopier(): void {
@@ -388,6 +579,7 @@ async function copier(): Promise<void> {
   el.etatCopie.textContent = echecs
     ? `${copiees} photo(s) copiée(s), ${echecs} en échec.`
     : `${copiees} photo(s) copiée(s).`;
+  majRecapitulatif();
   majBoutonCopier();
 }
 

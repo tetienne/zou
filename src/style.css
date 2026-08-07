@@ -8,6 +8,12 @@
   body {
     @apply bg-slate-50 text-[17px] leading-relaxed text-slate-900;
   }
+
+  /* L'attribut `hidden` doit toujours gagner : sans cette règle, une classe
+     utilitaire d'affichage (`flex`, `grid`…) laisserait l'élément visible. */
+  [hidden] {
+    display: none !important;
+  }
 }
 
 @layer components {
@@ -29,11 +35,55 @@
   }
 
   .champ {
-    @apply rounded-md border border-slate-300 bg-white px-2 py-1;
+    @apply rounded-md border border-slate-400 bg-white px-2 py-1 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-700;
   }
 
   .aide {
     @apply text-[0.92rem] text-slate-500;
+  }
+
+  /* --- Galerie de l'étape 4 ---------------------------------------------- */
+
+  .galerie {
+    @apply mt-4 grid gap-4;
+  }
+
+  .galerie-petites {
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  }
+
+  .galerie-moyennes {
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  }
+
+  .galerie-grandes {
+    grid-template-columns: repeat(auto-fill, minmax(23rem, 1fr));
+  }
+
+  .carte-photo {
+    @apply flex flex-col overflow-hidden rounded-xl border border-slate-300 bg-white;
+  }
+
+  .carte-photo-image {
+    @apply flex aspect-4/3 w-full items-center justify-center bg-slate-100;
+  }
+
+  /* Les photos qui demandent une action : bordure épaisse + fond teinté,
+     doublés par une pastille avec icône et mot — jamais la couleur seule. */
+  .carte-photo-alerte {
+    @apply border-amber-600 bg-amber-50 ring-2 ring-amber-400;
+  }
+
+  .carte-photo-erreur {
+    @apply border-red-600 bg-red-50 ring-2 ring-red-300;
+  }
+
+  .carte-photo-copiee {
+    @apply opacity-65;
+  }
+
+  .etat-pastille {
+    @apply inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.85rem] font-semibold;
   }
 
   .etiquette {
