@@ -98,6 +98,43 @@ python3 -m http.server 8080 --directory /tmp/pages
 `http://localhost` counts as a secure context, so the folder picker works there
 just as it does over HTTPS.
 
+### What the build ships
+
+`npm run build` minifies everything it produces. Vite does the JavaScript and
+the CSS on its own — esbuild, no configuration — and a small `transformIndexHtml`
+plugin in `vite.config.ts` does the HTML, which Vite otherwise copies out
+verbatim, indentation and source comments included. Gzipped, over the wire:
+
+| File          | Before  | After   |
+| ------------- | ------- | ------- |
+| `index.html`  | 2.39 kB | 2.20 kB |
+| `labels.html` | 2.57 kB | 2.23 kB |
+| `photos.html` | 3.05 kB | 2.52 kB |
+| stylesheet    | 5.10 kB | 5.05 kB |
+
+The stylesheet shrank for a different reason: Tailwind used to detect its own
+sources, which means reading every file in the repository, and the English prose
+of this README was enough to emit `.fixed`, `.static`, `.visible` and
+`.lowercase` — utilities no page uses. `style.css` now pins the scan to the three
+HTML pages and `src/**/*.ts` with `source(none)` plus explicit `@source` lines.
+Add a class anywhere else and it will not be generated.
+
+Collapsing HTML whitespace is a rendering change, not only a size one. It is
+safe here because nothing walks the DOM by sibling or child index, and it was
+checked rather than assumed: the three pages were screenshotted full-page in
+headless Chromium before and after, and the images came back byte-identical.
+
+Two things deliberately **not** done:
+
+- **terser instead of esbuild.** Measured: 0.7 kB gzipped across all the
+  JavaScript, for a sixfold build time and one more dependency.
+- **pre-compressing the assets.** GitHub Pages gzips text responses itself.
+
+Which leaves the honest summary: a page of this site now costs about 8 kB
+gzipped, and the 453 kB of `zxing_reader.wasm` behind the filing page dwarfs
+everything above. It is fetched only by that page, only once, and then cached —
+see the decoder section for why it is worth its weight.
+
 ---
 
 ## How the teacher uses it
