@@ -47,7 +47,7 @@ async function readGallery(page: Page): Promise<Card[]> {
 async function scan(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Choisir le dossier des photos' }).click();
   await expect(page.getByText(/— 8 photos/)).toBeVisible();
-  await page.getByRole('button', { name: 'Analyser les photos' }).click();
+  await page.getByRole('button', { name: 'Lire les étiquettes' }).click();
   await expect(page.getByText(/prénoms? reconnus? sur/)).toBeVisible({ timeout: 60_000 });
 }
 
@@ -172,7 +172,7 @@ test('rebuilds the gallery on a second scan', async ({ page }) => {
   await useFakeFolders(page, FOLDER);
   await page.goto('photos.html');
   await scan(page);
-  await page.getByRole('button', { name: 'Analyser les photos' }).click();
+  await page.getByRole('button', { name: 'Lire les étiquettes' }).click();
   await expect(page.getByText(/prénoms? reconnus? sur/)).toBeVisible({ timeout: 60_000 });
 
   expect(await page.locator('.photo-card').count()).toBe(8);
