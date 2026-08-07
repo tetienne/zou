@@ -10,12 +10,12 @@ tout le traitement se fait dans le navigateur, sur l'ordinateur de la maîtresse
 
 ---
 
-## Pourquoi du HTML/JS et pas Python ni Go
+## Pourquoi une page web et pas Python ni Go
 
 La contrainte principale est « une maîtresse, un PC Windows, pas de ligne de
 commande ». C'est elle qui décide de la technologie :
 
-| | Python | Go | **Page web statique** |
+| | Python | Go | **Page web statique (TypeScript)** |
 |---|---|---|---|
 | Installation | Python + dépendances, ou un `.exe` PyInstaller de 60–150 Mo | un `.exe` de ~10 Mo à copier | **rien, une adresse à mettre en favori** |
 | Lancement | double-clic sur un `.exe` → alerte SmartScreen / antivirus | idem | **on clique sur le favori** |
@@ -49,15 +49,19 @@ plan B. Le code de cette version resterait largement réutilisable.
 ## Mise en ligne (une seule fois)
 
 1. Pousser ce dépôt sur GitHub.
-2. `Settings` → `Pages` → *Source* : **Deploy from a branch**, branche `main`,
-   dossier `/ (root)`.
-3. Au bout d'une minute, le site est à l'adresse
+2. `Settings` → `Pages` → *Source* : **GitHub Actions**.
+3. Le workflow `.github/workflows/deploy.yml` fait le reste : à chaque push sur
+   `main`, il vérifie les types, lance les tests, construit le site et le
+   publie. Les pull requests passent les mêmes vérifications sans déployer.
+4. Au bout d'une minute, le site est à l'adresse
    `https://<utilisateur>.github.io/qr-school/`.
-4. Envoyer cette adresse à la maîtresse et lui faire mettre un favori sur le
+5. Envoyer cette adresse à la maîtresse et lui faire mettre un favori sur le
    bureau.
 
-HTTPS est indispensable (l'API d'accès aux dossiers ne fonctionne pas en
-`file://`), et GitHub Pages le fournit d'office.
+Le chemin de base est calculé automatiquement à partir du nom du dépôt
+(`VITE_BASE`) ; en local, `npm run dev` sert à la racine. HTTPS est
+indispensable — l'API d'accès aux dossiers ne fonctionne pas en `file://` — et
+GitHub Pages le fournit d'office.
 
 ---
 
@@ -113,24 +117,85 @@ Edge étant installé par défaut sur Windows, c'est le choix à recommander.
 
 ---
 
-## Détails techniques
+## Développement
 
-- Pas de build, pas de `npm install`, pas de framework : trois pages HTML, deux
-  fichiers JS, une feuille de style.
-- Lecture des QR : `BarcodeDetector` (natif Chromium) quand il est disponible,
-  sinon [jsQR](https://github.com/cozmo/jsQR). L'image est essayée à plusieurs
-  tailles (1200, 2000, 3200 px) puis sur quatre zones qui se chevauchent, ce qui
-  rattrape les étiquettes petites dans une grande photo.
-- Génération des QR : [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator),
-  avec l'extension UTF-8 pour les prénoms accentués.
+```bash
+npm install
+npm run dev        # serveur local avec rechargement à chaud
+npm run typecheck  # tsc --noEmit, mode strict
+npm test           # tests unitaires (Vitest)
+npm run build      # site statique dans dist/
+npm run preview    # sert dist/ pour vérifier le build
+```
+
+TypeScript en mode strict (`noUncheckedIndexedAccess` compris), Tailwind CSS 4
+via le plugin Vite, aucun framework d'interface : le DOM est manipulé
+directement, l'application tient en quelques centaines de lignes.
+
+| Fichier | Rôle |
+|---|---|
+| `src/noms.ts` | prénoms, extensions, noms de fichiers — sans DOM |
+| `src/rangement.ts` | numérotation et recherche d'un nom libre — sans DOM ni disque |
+| `src/lecture-qr.ts` | décodage des QR codes sur les photos |
+| `src/generation-qr.ts` | génération des QR codes des étiquettes |
+| `src/photos.ts`, `src/etiquettes.ts` | câblage de l'interface |
+
+La logique métier est volontairement séparée du DOM : `noms.ts` et
+`rangement.ts` sont testés sans navigateur, et `rangement.ts` ne touche au
+disque qu'à travers un prédicat `existe` qu'on remplace en test.
+
+## Bibliothèques de reconnaissance
+
+**Il n'y a pas de reconnaissance de prénom.** Le prénom n'est pas *lu* sur
+l'étiquette, il est *contenu* dans le QR code. Il n'y a donc ni OCR, ni
+Tesseract, ni modèle de vision — c'est ce qui rend le projet fiable et léger.
+Le repli quand la lecture échoue n'est pas un second algorithme : c'est la
+maîtresse qui corrige la case dans le tableau, avec le bouton « compléter les
+vides avec le prénom du dessus » pour les séries.
+
+Trois mécanismes de lecture, essayés dans cet ordre :
+
+1. **`BarcodeDetector`** — l'API de décodage intégrée à Chromium, sans
+   dépendance. C'est le décodeur le plus tolérant quand il est disponible.
+2. **[jsQR](https://github.com/cozmo/jsQR)** (1.4, Apache-2.0, ~150 kB) — repli
+   en JavaScript pur, port du décodeur ZXing. L'image est essayée à 1200, 2000
+   puis 3200 px de large : une étiquette de 200 px dans une photo de 12 Mpx
+   disparaît si l'on ne réduit qu'une seule fois.
+3. **Découpage en quatre zones** qui se chevauchent (60 % de la photo chacune),
+   réduites à 1600 px — rattrape les étiquettes posées dans un coin.
+
+Pour la génération :
+[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (2.0, MIT,
+~20 kB), avec `stringToBytes` forcé en UTF-8 — sans quoi la version 2 encode en
+latin-1 et « Léa » revient en mojibake. Correction d'erreur niveau *M* : une
+étiquette un peu abîmée ou mal éclairée reste lisible.
+
+Autres points :
+
 - L'orientation EXIF est prise en compte (`imageOrientation: 'from-image'`), donc
   les photos prises en portrait sont lues correctement.
 - Les caractères interdits sous Windows (`< > : " / \ | ? *`) sont retirés des
   noms de fichiers ; les accents et les traits d'union sont conservés.
-- Bibliothèques embarquées dans `vendor/` (aucun CDN) : le site continuerait de
-  fonctionner hors ligne s'il était copié sur le disque et servi en HTTPS.
+- Chaque page ne charge que ce dont elle a besoin : la planche d'étiquettes ne
+  télécharge pas le décodeur, et inversement.
+- Aucun CDN : tout est empaqueté par Vite.
 
-## Limites connues (v1)
+## Tests
+
+`npm test` couvre, sans navigateur :
+
+- les prénoms et noms de fichiers (accents, caractères interdits, modèles) ;
+- la numérotation, y compris le deuxième passage sur les mêmes photos, qui doit
+  reprendre à `_03` au lieu d'écraser `_01` ;
+- un **aller-retour QR complet** : le QR code est généré par la fonction que la
+  page d'étiquettes utilise réellement, « photographié » en pixels, réduit comme
+  le ferait un canvas, puis relu par jsQR — y compris le cas d'une petite
+  étiquette dans une photo de 12 Mpx et celui du découpage en zones.
+
+Ce que les tests ne couvrent pas et qu'il faut vérifier à la main : le sélecteur
+de dossier natif de Windows, et de vraies photos d'appareil.
+
+## Limites connues
 
 - Les fichiers **HEIC/HEIF** (iPhone par défaut) ne sont pas lisibles par le
   navigateur ; ils sont listés et signalés comme tels. Régler l'iPhone sur
@@ -138,3 +203,5 @@ Edge étant installé par défaut sur Windows, c'est le choix à recommander.
 - Un seul QR code par photo est utilisé (le premier trouvé).
 - Le déplacement (au lieu de la copie) n'est pas proposé, volontairement.
 - Les dossiers choisis ne sont pas mémorisés d'une session à l'autre.
+- Le sélecteur de dossier natif ne peut pas être piloté par un test automatisé :
+  cette partie n'est vérifiée qu'à la main.

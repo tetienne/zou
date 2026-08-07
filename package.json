@@ -1,0 +1,26 @@
+{
+  "name": "qr-school",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Range les photos des travaux d'élèves grâce à une étiquette QR portant le prénom.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "jsqr": "^1.4.0",
+    "qrcode-generator": "^2.0.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

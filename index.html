@@ -5,45 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Photos d'élèves — QR</title>
 <link rel="icon" href="favicon.svg">
-<link rel="stylesheet" href="style.css">
+<script type="module" src="/src/accueil.ts"></script>
 </head>
-<body>
+<body class="px-4 pb-16">
 
-<header>
-  <h1>Photos d'élèves</h1>
-  <p class="sous-titre">Ranger automatiquement les photos des travaux grâce à un QR code.</p>
+<header class="mx-auto max-w-4xl border-b-2 border-slate-300 pt-6 pb-4">
+  <h1 class="text-2xl font-bold">Photos d'élèves</h1>
+  <p class="text-slate-500">Ranger automatiquement les photos des travaux grâce à un QR code.</p>
 </header>
 
-<main>
-  <div class="accueil-liens">
-    <a class="carte" href="etiquettes.html">
-      <strong>1. Créer les étiquettes</strong>
+<main class="mx-auto max-w-4xl">
+  <div class="mt-6 flex flex-wrap gap-4">
+    <a class="block flex-1 basis-64 rounded-xl border border-slate-300 bg-white p-5 no-underline hover:border-blue-700" href="etiquettes.html">
+      <strong class="mb-1 block text-lg text-blue-700">1. Créer les étiquettes</strong>
       Tapez la liste des prénoms, imprimez la planche d'étiquettes QR et posez-en une
       à côté de chaque travail avant de le photographier.
     </a>
-    <a class="carte" href="photos.html">
-      <strong>2. Ranger les photos</strong>
+    <a class="block flex-1 basis-64 rounded-xl border border-slate-300 bg-white p-5 no-underline hover:border-blue-700" href="photos.html">
+      <strong class="mb-1 block text-lg text-blue-700">2. Ranger les photos</strong>
       Choisissez le dossier des photos et le dossier de destination :
       chaque photo est copiée et renommée avec le prénom de l'enfant.
     </a>
   </div>
 
-  <h2>Comment ça marche</h2>
-  <ol>
+  <h2 class="mt-8 mb-3 text-xl font-semibold">Comment ça marche</h2>
+  <ol class="list-decimal space-y-1 pl-6">
     <li>Vous imprimez une planche d'étiquettes : chaque étiquette porte un QR code et le prénom en clair.</li>
     <li>L'enfant termine son travail, vous posez son étiquette à côté et vous photographiez le tout.</li>
     <li>Vous branchez l'appareil photo ou le téléphone sur l'ordinateur.</li>
     <li>Vous ouvrez cette page, vous cliquez sur « Ranger les photos », et les photos sont copiées
-      dans le dossier de votre choix sous le nom <code>Prénom_date_numéro.jpg</code>.</li>
+      dans le dossier de votre choix sous le nom <code class="rounded bg-slate-200 px-1 text-[0.9em]">Prénom_date_numéro.jpg</code>.</li>
   </ol>
 
-  <p class="aide">
+  <p class="aide mt-4">
     Rien n'est installé et rien n'est envoyé sur Internet : tout le traitement se fait
     dans le navigateur, sur votre ordinateur. Les photos d'origine ne sont jamais modifiées
     ni supprimées, elles sont uniquement copiées.
   </p>
 
-  <h2>Navigateur</h2>
+  <h2 class="mt-8 mb-3 text-xl font-semibold">Navigateur</h2>
   <p class="aide">
     Utilisez <strong>Microsoft Edge</strong> ou <strong>Google Chrome</strong> : ce sont les seuls
     qui savent écrire directement dans un dossier de l'ordinateur. Avec Firefox, le rangement
