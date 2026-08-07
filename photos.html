@@ -25,7 +25,10 @@
       <div id="warning" role="status"></div>
 
       <section class="step">
-        <h2 class="text-h2 mb-3 font-semibold">1. Les photos à ranger</h2>
+        <h2 class="text-h2 mb-1 font-semibold">1. Les photos à ranger</h2>
+        <p class="hint mb-3">
+          Branchez d'abord l'appareil photo ou le téléphone : ses photos apparaissent comme un dossier.
+        </p>
         <div class="flex flex-wrap items-center gap-3">
           <button type="button" id="choose-source" class="button">Choisir le dossier des photos</button>
           <span class="text-caption font-mono text-slate-500" id="source-name">aucun dossier choisi</span>
@@ -68,7 +71,7 @@
 
       <section class="step">
         <h2 class="text-h2 mb-3 font-semibold">3. Lire les QR codes</h2>
-        <button type="button" id="scan" class="button" disabled>Analyser les photos</button>
+        <button type="button" id="scan" class="button" disabled>Lire les étiquettes</button>
         <!-- Why the button above is dead, said where she is looking: photos.ts fills it. -->
         <p class="hint mt-2" id="scan-blocked">Choisissez d'abord le dossier des photos, à l'étape 1.</p>
         <progress id="scan-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
@@ -77,9 +80,7 @@
 
       <section class="step" id="results-block" hidden>
         <h2 class="text-h2 mb-1 font-semibold">4. Vérifier et copier</h2>
-        <p class="hint mb-4">
-          Vous pouvez corriger un prénom en cliquant dessus. Une photo sans prénom n'est pas copiée.
-        </p>
+        <p class="hint mb-4">Vous pouvez corriger un prénom en cliquant dessus.</p>
 
         <div id="needs-attention" class="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-3" hidden>
           <p class="text-lead flex items-start gap-2 font-semibold text-amber-900">
