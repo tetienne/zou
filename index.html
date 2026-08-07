@@ -3,14 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Zou — Ranger les travaux de la classe</title>
+    <title>Zou — Ranger les photos des travaux d'élèves par QR code</title>
+    <!-- The build derives the social and canonical tags from this title and this
+         description; see `seoTags` in vite.config.ts. -->
+    <meta
+      name="description"
+      content="Rangez les photos des travaux de vos élèves par prénom : une étiquette QR code, une photo, et chaque image part dans le bon dossier. Gratuit, sans installation."
+    />
     <link rel="icon" href="favicon.svg" />
     <script type="module" src="/src/home.ts"></script>
   </head>
   <body class="px-4 pb-16">
     <header class="border-tableau mx-auto max-w-5xl border-b-2 pt-6 pb-4">
       <p class="text-micro font-semibold tracking-widest text-slate-500 uppercase">Zou</p>
-      <h1 class="text-h1 mt-1 font-bold">Ranger les travaux de la classe</h1>
+      <h1 class="text-h1 mt-1 font-bold">Ranger les photos des travaux de la classe</h1>
       <p class="mt-1 text-slate-500">
         Une étiquette QR à côté du travail, une photo, et zou : chaque image part dans le dossier du bon enfant.
       </p>
@@ -99,6 +105,73 @@
           Pour un rangement automatique dans le dossier de votre choix, ouvrez cette page avec <strong>Vivaldi</strong>,
           <strong>Brave</strong>, <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong>.
         </span>
+      </div>
+
+      <!-- These answers are the only prose a search engine has to work with: the
+           two pages above are tools, and a tool is almost entirely buttons. They
+           are written for the teacher who lands here from a search and wants to
+           know whether it works on the school computer, not to carry keywords. -->
+      <h2 class="text-h2 mt-10 mb-3 font-semibold">Questions fréquentes</h2>
+      <div class="space-y-4">
+        <section>
+          <h3 class="font-semibold">Faut-il installer un logiciel ?</h3>
+          <p>
+            Non. Zou est une page web : vous l'ouvrez depuis un marque-page et elle fonctionne. Il n'y a rien à
+            installer sur l'ordinateur de l'école, donc rien à faire autoriser par le service informatique.
+          </p>
+        </section>
+        <section>
+          <h3 class="font-semibold">Où partent les photos de mes élèves ?</h3>
+          <p>
+            Nulle part. Tout le travail se fait dans le navigateur, sur votre ordinateur : les photos ne sont envoyées
+            sur aucun serveur. Il n'y a ni compte, ni inscription, ni adresse e-mail à donner.
+          </p>
+        </section>
+        <section>
+          <h3 class="font-semibold">Est-ce que c'est gratuit ?</h3>
+          <p>
+            Oui, entièrement, et sans publicité. Le code de l'application est ouvert sous licence MIT : n'importe qui
+            peut le lire, l'utiliser dans sa classe ou l'adapter.
+          </p>
+        </section>
+        <section>
+          <h3 class="font-semibold">Quel navigateur faut-il utiliser ?</h3>
+          <p>
+            Avec Vivaldi, Brave, Google Chrome ou Microsoft Edge, les photos sont écrites directement dans le dossier
+            que vous choisissez. Avec Firefox ou Safari, la lecture des étiquettes fonctionne aussi, mais les photos
+            renommées arrivent une par une dans le dossier « Téléchargements », sans sous-dossier par prénom.
+          </p>
+        </section>
+        <section>
+          <h3 class="font-semibold">Et les photos prises avec un iPhone ?</h3>
+          <p>
+            Les fichiers HEIC, le format par défaut de l'iPhone, ne sont pas lisibles par le navigateur : ils sont
+            listés et signalés comme tels. Réglez l'appareil photo sur « Le plus compatible » pour qu'il enregistre en
+            JPEG, ou convertissez les photos avant de les ranger.
+          </p>
+        </section>
+        <section>
+          <h3 class="font-semibold">Combien de photos peut-on ranger d'un coup ?</h3>
+          <p>
+            Le contenu d'une carte mémoire de fin de période, plusieurs centaines de photos, passe sans difficulté : la
+            lecture des QR codes est répartie sur les cœurs de l'ordinateur et la page reste utilisable pendant ce
+            temps. Comptez environ trois secondes pour vingt-quatre photos de 12 mégapixels.
+          </p>
+        </section>
+        <section>
+          <h3 class="font-semibold">Que se passe-t-il si une étiquette n'est pas lue ?</h3>
+          <p>
+            Rien n'est rangé au hasard. Les photos sans prénom passent en tête de la galerie avec un cadre épais ; vous
+            tapez le prénom, aidé par la liste de la classe, et la photo rejoint les autres.
+          </p>
+        </section>
+        <section>
+          <h3 class="font-semibold">Les photos d'origine sont-elles modifiées ?</h3>
+          <p>
+            Jamais : elles sont uniquement copiées, ni renommées ni supprimées sur la carte. Ranger deux fois la même
+            carte n'écrase rien non plus, la numérotation continue là où elle s'était arrêtée.
+          </p>
+        </section>
       </div>
     </main>
 

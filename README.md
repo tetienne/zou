@@ -102,6 +102,69 @@ branch must be allowed under `Settings` → `Environments` → `github-pages` �
 _Deployment branches and tags_, or the job fails with "Branch is not allowed to
 deploy to github-pages".
 
+## Being found
+
+The teacher this was written for has the address in a bookmark and needs none of
+this. It is here for the second teacher, who does not know the app exists and
+types `ranger photos travaux élèves` into a search engine.
+
+**A search engine ranks a page that answers a question, and trusts it in
+proportion to who links to it.** Everything a build step can do sits below those
+two and substitutes for neither:
+
+- **The pages are tools, and a tool is almost entirely buttons.** The three
+  pages once held about 200 words between them — nothing to match a query
+  against. The questions at the bottom of the home page are the answer to that,
+  written for the teacher who lands there from a search and wants to know
+  whether it works on the school computer. That they contain the words she typed
+  follows; a page written for the engine rather than the reader reads like it.
+- **Links are the part no build step reaches.** A mention in a teachers' forum
+  or a school newsletter is worth more than every tag below put together. That
+  is also what the shared-link preview is for: a link that unfurls with a
+  picture and a sentence gets posted, a bare URL does not.
+
+`seoTags` in `vite.config.ts` generates the rest, so a page carries only its
+`<title>` and its `<meta name="description">`, in French — every other tag is a
+rearrangement of those two, and writing them by hand would mean three copies per
+page drifting apart at the first edit:
+
+| Generated                                             | From                                                     |
+| ----------------------------------------------------- | -------------------------------------------------------- |
+| `og:title`, `og:description`, `twitter:card`          | the page's `<title>` and its `<meta name="description">` |
+| `canonical`, `og:url`, `og:image` and its dimensions  | the deployed address                                     |
+| a `WebApplication` block in JSON-LD, on the home page | the same title and description                           |
+| `sitemap.xml`                                         | the three pages                                          |
+
+A page missing either one **fails the build**, because the failure it replaces
+is silent — a link shared into a staff-room group chat that unfurls as a bare
+URL, which nobody notices for months.
+
+Three decisions worth the sentence they cost:
+
+- **An address that cannot be derived is not guessed.** The canonical link says
+  "this is the real copy of this page"; pointed at the wrong site it asks the
+  engine to index that site instead. It comes from `GITHUB_REPOSITORY`, so a
+  fork gets its own, and under `npm run dev` — where there is no published
+  address — the three absolute tags are left out rather than filled with
+  upstream's. `SITE_URL` overrides the derivation, which is what a custom domain
+  needs.
+- **No `robots.txt`.** A crawler only reads the one at the root of the host, and
+  that root belongs to another repository entirely; a `robots.txt` shipped here
+  would sit at `/zou/robots.txt` and be read by nobody. A sitemap has no such
+  rule, which is why it is the one Search Console accepts for a site living
+  under a path.
+- **The preview picture is committed, not built.** `public/og.png` comes from
+  `scripts/og-card.html` through `node scripts/build-og-image.js`, which drives a
+  headless Chromium. It changes about once a year; making every build — and every
+  fork's CI — install a browser to redraw the same picture would be a poor trade.
+
+What is left for a human, in the order that pays: register the site in **Google
+Search Console** as a URL-prefix property and submit `sitemap.xml` — that does
+not improve the ranking, it is how you find out what the ranking is; **get it
+mentioned** where primary teachers already read each other; and, the day it
+matters, **a domain of its own**, which costs a `CNAME` file, `SITE_URL` in
+`deploy.yml`, and sending the teacher her bookmark once more.
+
 ## Development
 
 ```bash
