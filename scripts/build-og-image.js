@@ -3,11 +3,12 @@
 //
 //   node scripts/build-og-image.js
 //
-// The result is committed, so nothing in `npm run build` or in CI depends on a
-// browser being installed. That is the whole reason this is a script and not a
-// Vite plugin: the preview changes once a year, and paying for a headless
-// Chromium on every build — and in every fork's CI — to redraw the same picture
-// would be a poor trade.
+// The result is committed, and this is a script rather than a Vite plugin, for a
+// reason that is not the cost of the browser — GitHub's runners ship Chrome. The
+// same HTML rendered twice does not give the same bytes: Chrome version, font
+// rendering and PNG encoder all move. Redrawing it on every build would drop a
+// new 54 kB binary into the diff of pull requests that never touched the card,
+// which changes about once a year.
 //
 // Set CHROME_PATH to point at a browser the search below does not find.
 
