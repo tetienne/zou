@@ -26,6 +26,13 @@
           <button type="button" id="choose-source" class="button">Choisir le dossier des photos</button>
           <span class="text-caption font-mono text-slate-500" id="source-name">aucun dossier choisi</span>
         </div>
+        <!-- Offered, not restored: the browser only renews folder access from a click. -->
+        <p class="mt-3 flex flex-wrap items-center gap-3" id="source-recall" hidden>
+          <button type="button" id="source-resume" class="button-secondary">
+            Reprendre <span id="source-recall-name" class="font-mono"></span>
+          </button>
+          <span class="hint">le dossier de la dernière fois</span>
+        </p>
       </section>
 
       <section class="step">
@@ -34,6 +41,12 @@
           <button type="button" id="choose-destination" class="button">Choisir le dossier de destination</button>
           <span class="text-caption font-mono text-slate-500" id="destination-name">aucun dossier choisi</span>
         </div>
+        <p class="mt-3 flex flex-wrap items-center gap-3" id="destination-recall" hidden>
+          <button type="button" id="destination-resume" class="button-secondary">
+            Reprendre <span id="destination-recall-name" class="font-mono"></span>
+          </button>
+          <span class="hint">le dossier de la dernière fois</span>
+        </p>
         <label class="mt-3 block">
           <input type="checkbox" id="subfolders" checked class="align-middle" />
           Créer un sous-dossier par prénom

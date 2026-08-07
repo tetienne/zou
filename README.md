@@ -52,7 +52,9 @@ not be narrower than a twentieth of the photo. A tilt of 15–40° is fine.
 
 On the **Ranger les photos** page:
 
-1. _Choisir le dossier des photos_ — the SD card or phone folder.
+1. _Choisir le dossier des photos_ — the SD card or phone folder. Both folders
+   are offered back the following week under _Reprendre_: the browser will not
+   reopen a folder on its own, but one click is shorter than the file dialog.
 2. _Choisir le dossier de destination_, plus two options: a subfolder per first
    name (on by default) and the file name pattern (`Léa_2026-06-14_01.jpg`,
    `Léa_01.jpg` or `2026-06-14_Léa_01.jpg`). The date is the photo's file date.
@@ -128,14 +130,17 @@ framework.
 | `src/scan-worker.ts`             | one photo at a time, off the page's thread               |
 | `src/dom.ts`                     | element lookup with a runtime type check                 |
 | `src/folder-access.ts`           | File System Access types, and whether the browser has it |
+| `src/folder-memory.ts`           | last week's folders: the handle store and the permission |
 | `src/photos.ts`, `src/labels.ts` | interface wiring                                         |
 
 Business logic is kept away from the DOM: `names.ts` and `filing.ts` are tested
 without a browser, and `filing.ts` only touches the disk through an `exists`
 predicate that tests replace.
 
-`npm test` does not cover the native folder picker, real camera photos, or the
-worker pool — those need a browser and are checked by hand.
+`npm test` does not cover the native folder picker, real camera photos, the
+worker pool, or the IndexedDB half of `folder-memory.ts` — those need a browser
+and are checked by hand. What that file decides with a remembered handle is
+tested, since that is where the mistakes are.
 
 ### Contrast
 
@@ -177,7 +182,10 @@ teacher's browser; renaming them would silently empty her class list.
 - Correcting a first name after the copy re-copies the photo under the new name,
   but the earlier copy stays on disk — there is no undo.
 - Moving instead of copying is not offered.
-- The chosen folders are not remembered between sessions.
+- The remembered folders are offered, never reopened silently: browsers only
+  renew access to a folder from inside a click, so _Reprendre_ is a button and
+  not a page-load effect. A folder that was moved, renamed or unplugged drops
+  off the page and has to be picked again.
 
 ## Licence
 

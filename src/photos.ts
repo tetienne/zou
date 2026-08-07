@@ -16,6 +16,7 @@ import {
 import { findFreeFileName, planFileNames, type PhotoEntry } from './filing';
 import { required } from './dom';
 import { directoryPicker as folderPicker, supportsFolders, type Directory } from './folder-access';
+import { forgetFolder, grantAccess, recallFolder, rememberFolder } from './folder-memory';
 
 const directoryPicker = folderPicker();
 const supportsDirectories = supportsFolders();
@@ -76,8 +77,14 @@ const el = {
   warning: required('warning', HTMLDivElement),
   chooseSource: required('choose-source', HTMLButtonElement),
   sourceName: required('source-name', HTMLSpanElement),
+  sourceRecall: required('source-recall', HTMLParagraphElement),
+  sourceRecallName: required('source-recall-name', HTMLSpanElement),
+  sourceResume: required('source-resume', HTMLButtonElement),
   chooseDestination: required('choose-destination', HTMLButtonElement),
   destinationName: required('destination-name', HTMLSpanElement),
+  destinationRecall: required('destination-recall', HTMLParagraphElement),
+  destinationRecallName: required('destination-recall-name', HTMLSpanElement),
+  destinationResume: required('destination-resume', HTMLButtonElement),
   fallbackSource: required('fallback-source', HTMLInputElement),
   subfolders: required('subfolders', HTMLInputElement),
   pattern: required('pattern', HTMLSelectElement),
@@ -205,6 +212,8 @@ el.copy.addEventListener('click', () => void copyPhotos());
 el.pattern.addEventListener('change', recomputeNames);
 el.subfolders.addEventListener('change', recomputeNames);
 
+void offerRememberedFolders();
+
 // --- Folder selection -------------------------------------------------------
 
 async function chooseSource(): Promise<void> {
@@ -220,6 +229,12 @@ async function chooseSource(): Promise<void> {
     return; // cancelled
   }
 
+  el.sourceRecall.hidden = true;
+  void rememberFolder('source', directory);
+  await readSourceDirectory(directory);
+}
+
+async function readSourceDirectory(directory: Directory): Promise<void> {
   const entries: { name: string; getFile(): Promise<File> }[] = [];
   for await (const entry of directory.values()) {
     if (entry.kind === 'file' && isImage(entry.name)) entries.push(entry);
@@ -235,14 +250,74 @@ async function chooseSource(): Promise<void> {
 
 async function chooseDestination(): Promise<void> {
   if (!directoryPicker) return;
+  let directory: Directory;
   try {
-    destination = await directoryPicker({ id: 'photos-destination', mode: 'readwrite' });
+    directory = await directoryPicker({ id: 'photos-destination', mode: 'readwrite' });
   } catch {
     return;
   }
-  el.destinationName.textContent = destination.name;
+  el.destinationRecall.hidden = true;
+  void rememberFolder('destination', directory);
+  useDestination(directory);
+}
+
+function useDestination(directory: Directory): void {
+  destination = directory;
+  el.destinationName.textContent = directory.name;
   el.chooseDestination.textContent = 'Changer de dossier de destination';
   refreshCopyButton();
+}
+
+// --- The folders of the week before ------------------------------------------
+
+/**
+ * Offered rather than restored: the browser renews access to a folder only
+ * from inside a click, so the page can name last week's folder but not open it
+ * on her behalf.
+ */
+async function offerRememberedFolders(): Promise<void> {
+  if (!directoryPicker) return;
+
+  const source = await recallFolder('source');
+  if (source) {
+    el.sourceRecallName.textContent = source.name;
+    el.sourceRecall.hidden = false;
+    el.sourceResume.addEventListener('click', () => void resumeSource(source));
+  }
+
+  if (!supportsDirectories) return;
+  const target = await recallFolder('destination');
+  if (target) {
+    el.destinationRecallName.textContent = target.name;
+    el.destinationRecall.hidden = false;
+    el.destinationResume.addEventListener('click', () => void resumeDestination(target));
+  }
+}
+
+async function resumeSource(folder: Directory): Promise<void> {
+  if (!(await grantAccess(folder, 'read'))) {
+    await dropRemembered('source', el.sourceRecall);
+    el.scanBlocked.textContent =
+      'Ce dossier n’est plus accessible. Choisissez-le à nouveau ci-dessus.';
+    el.scanBlocked.hidden = false;
+    return;
+  }
+  el.sourceRecall.hidden = true;
+  await readSourceDirectory(folder);
+}
+
+async function resumeDestination(folder: Directory): Promise<void> {
+  if (!(await grantAccess(folder, 'readwrite'))) {
+    await dropRemembered('destination', el.destinationRecall);
+    return;
+  }
+  el.destinationRecall.hidden = true;
+  useDestination(folder);
+}
+
+async function dropRemembered(slot: 'source' | 'destination', row: HTMLElement): Promise<void> {
+  row.hidden = true;
+  await forgetFolder(slot);
 }
 
 function loadFiles(found: { file: File; originalName: string }[], directoryName: string): void {

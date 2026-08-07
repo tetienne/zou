@@ -19,6 +19,10 @@ export type DirectoryPicker = (options?: PickerOptions) => Promise<Directory>;
 
 export interface Directory {
   readonly name: string;
+  // Chromium only, and absent on a handle that predates them: a folder kept
+  // from one week to the next is asked whether it may still be read.
+  queryPermission?(options?: { mode?: 'read' | 'readwrite' }): Promise<PermissionState>;
+  requestPermission?(options?: { mode?: 'read' | 'readwrite' }): Promise<PermissionState>;
   values(): AsyncIterable<{ kind: string; name: string; getFile(): Promise<File> }>;
   getDirectoryHandle(name: string, options?: { create?: boolean }): Promise<Directory>;
   getFileHandle(
