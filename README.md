@@ -73,13 +73,18 @@ of the photos in the folder, not the order the gallery displays them in.
 
 ## Browsers
 
-| Browser                                                   | Result                                                                                |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Any Chromium browser: Vivaldi, Brave, Chrome, Edge, Opera | everything works, files written straight into the chosen folder                       |
-| Firefox, Safari                                           | scanning works, but renamed photos arrive one by one in Downloads, without subfolders |
+Writing straight into a chosen folder needs the File System Access API. Chrome
+and Edge have it, Firefox and Safari do not — [MDN keeps the table up to
+date][bcd]. Where it is missing, the filing page warns and disables the
+destination folder and the per-name subfolders: the renamed photos arrive one by
+one in Downloads, without subfolders.
 
-The app says so itself: in a browser of the second row, the home page warns about
-Downloads and the filing page greys out the destination folder.
+The pages never name a browser, and that is the point: Brave ships Chromium,
+turns the API off ([brave#11407]), and appears in no compat table at all.
+`folder-access.ts` asks for `showDirectoryPicker` and believes the answer.
+
+[bcd]: https://developer.mozilla.org/docs/Web/API/Window/showDirectoryPicker#browser_compatibility
+[brave#11407]: https://github.com/brave/brave-browser/issues/11407
 
 ## What it will not do
 
