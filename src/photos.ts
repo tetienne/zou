@@ -16,6 +16,7 @@ import {
 import { findFreeFileName, planFileNames, type PhotoEntry } from './filing';
 import { required } from './dom';
 import { directoryPicker as folderPicker, supportsFolders, type Directory } from './folder-access';
+import { forgetFolder, grantAccess, recallFolder, rememberFolder } from './folder-memory';
 
 const directoryPicker = folderPicker();
 const supportsDirectories = supportsFolders();
@@ -76,23 +77,32 @@ const el = {
   warning: required('warning', HTMLDivElement),
   chooseSource: required('choose-source', HTMLButtonElement),
   sourceName: required('source-name', HTMLSpanElement),
+  sourceRecall: required('source-recall', HTMLParagraphElement),
+  sourceRecallName: required('source-recall-name', HTMLSpanElement),
+  sourceResume: required('source-resume', HTMLButtonElement),
   chooseDestination: required('choose-destination', HTMLButtonElement),
   destinationName: required('destination-name', HTMLSpanElement),
+  destinationRecall: required('destination-recall', HTMLParagraphElement),
+  destinationRecallName: required('destination-recall-name', HTMLSpanElement),
+  destinationResume: required('destination-resume', HTMLButtonElement),
   fallbackSource: required('fallback-source', HTMLInputElement),
   subfolders: required('subfolders', HTMLInputElement),
   pattern: required('pattern', HTMLSelectElement),
   scan: required('scan', HTMLButtonElement),
+  scanBlocked: required('scan-blocked', HTMLParagraphElement),
   scanProgress: required('scan-progress', HTMLProgressElement),
   scanStatus: required('scan-status', HTMLParagraphElement),
   resultsBlock: required('results-block', HTMLElement),
   results: required('results', HTMLDivElement),
   needsAttention: required('needs-attention', HTMLDivElement),
   needsAttentionText: required('needs-attention-text', HTMLSpanElement),
+  heicNote: required('heic-note', HTMLParagraphElement),
   allReady: required('all-ready', HTMLParagraphElement),
   summary: required('summary', HTMLParagraphElement),
   knownNames: required('known-names', HTMLDataListElement),
   copy: required('copy', HTMLButtonElement),
   copyStatus: required('copy-status', HTMLSpanElement),
+  copyBlocked: required('copy-blocked', HTMLParagraphElement),
   copyProgress: required('copy-progress', HTMLProgressElement),
 };
 
@@ -202,6 +212,8 @@ el.copy.addEventListener('click', () => void copyPhotos());
 el.pattern.addEventListener('change', recomputeNames);
 el.subfolders.addEventListener('change', recomputeNames);
 
+void offerRememberedFolders();
+
 // --- Folder selection -------------------------------------------------------
 
 async function chooseSource(): Promise<void> {
@@ -217,6 +229,12 @@ async function chooseSource(): Promise<void> {
     return; // cancelled
   }
 
+  el.sourceRecall.hidden = true;
+  void rememberFolder('source', directory);
+  await readSourceDirectory(directory);
+}
+
+async function readSourceDirectory(directory: Directory): Promise<void> {
   const entries: { name: string; getFile(): Promise<File> }[] = [];
   for await (const entry of directory.values()) {
     if (entry.kind === 'file' && isImage(entry.name)) entries.push(entry);
@@ -232,13 +250,73 @@ async function chooseSource(): Promise<void> {
 
 async function chooseDestination(): Promise<void> {
   if (!directoryPicker) return;
+  let directory: Directory;
   try {
-    destination = await directoryPicker({ id: 'photos-destination', mode: 'readwrite' });
+    directory = await directoryPicker({ id: 'photos-destination', mode: 'readwrite' });
   } catch {
     return;
   }
-  el.destinationName.textContent = destination.name;
+  el.destinationRecall.hidden = true;
+  void rememberFolder('destination', directory);
+  useDestination(directory);
+}
+
+function useDestination(directory: Directory): void {
+  destination = directory;
+  el.destinationName.textContent = directory.name;
+  el.chooseDestination.textContent = 'Changer de dossier de destination';
   refreshCopyButton();
+}
+
+// --- The folders of the week before ------------------------------------------
+
+/**
+ * Offered rather than restored: the browser renews access to a folder only
+ * from inside a click, so the page can name last week's folder but not open it
+ * on her behalf.
+ */
+async function offerRememberedFolders(): Promise<void> {
+  if (!directoryPicker) return;
+
+  const source = await recallFolder('source');
+  if (source) {
+    el.sourceRecallName.textContent = source.name;
+    el.sourceRecall.hidden = false;
+    el.sourceResume.addEventListener('click', () => void resumeSource(source));
+  }
+
+  const target = await recallFolder('destination');
+  if (target) {
+    el.destinationRecallName.textContent = target.name;
+    el.destinationRecall.hidden = false;
+    el.destinationResume.addEventListener('click', () => void resumeDestination(target));
+  }
+}
+
+async function resumeSource(folder: Directory): Promise<void> {
+  if (!(await grantAccess(folder, 'read'))) {
+    await dropRemembered('source', el.sourceRecall);
+    el.scanBlocked.textContent =
+      'Ce dossier n’est plus accessible. Choisissez-le à nouveau ci-dessus.';
+    el.scanBlocked.hidden = false;
+    return;
+  }
+  el.sourceRecall.hidden = true;
+  await readSourceDirectory(folder);
+}
+
+async function resumeDestination(folder: Directory): Promise<void> {
+  if (!(await grantAccess(folder, 'readwrite'))) {
+    await dropRemembered('destination', el.destinationRecall);
+    return;
+  }
+  el.destinationRecall.hidden = true;
+  useDestination(folder);
+}
+
+async function dropRemembered(slot: 'source' | 'destination', row: HTMLElement): Promise<void> {
+  row.hidden = true;
+  await forgetFolder(slot);
 }
 
 function loadFiles(found: { file: File; originalName: string }[], directoryName: string): void {
@@ -249,9 +327,13 @@ function loadFiles(found: { file: File; originalName: string }[], directoryName:
   el.needsAttention.hidden = true;
   el.allReady.hidden = true;
   el.summary.textContent = '';
-  el.sourceName.textContent = `${directoryName} — ${found.length} photo(s)`;
+  el.sourceName.textContent = `${directoryName} — ${found.length} photo${plural(found.length)}`;
+  el.chooseSource.textContent = 'Changer de dossier';
   el.scan.disabled = found.length === 0;
-  el.scanStatus.textContent = found.length === 0 ? 'Aucune image trouvée dans ce dossier.' : '';
+  el.scanStatus.textContent = '';
+  el.scanBlocked.textContent =
+    found.length === 0 ? 'Ce dossier ne contient aucune image. Choisissez-en un autre.' : '';
+  el.scanBlocked.hidden = found.length > 0;
 }
 
 // --- Scanning ---------------------------------------------------------------
@@ -260,6 +342,7 @@ async function scanPhotos(): Promise<void> {
   el.scan.disabled = true;
   el.copy.disabled = true;
   el.copyStatus.textContent = '';
+  el.scanBlocked.hidden = true;
   clearRows();
   el.resultsBlock.hidden = false;
   el.scanProgress.hidden = false;
@@ -341,20 +424,20 @@ function createRow(
     const empty = document.createElement('p');
     empty.className =
       'flex size-full flex-col items-center justify-center gap-2 px-3 text-center ' +
-      'text-[0.85rem] text-slate-600';
+      'text-caption text-slate-600';
     empty.append(icon('forbidden', 'size-7 text-slate-500'), 'Aperçu impossible');
     imageArea.append(empty);
   }
 
   const bottom = document.createElement('div');
-  bottom.className = 'flex flex-1 flex-col gap-2 border-t border-slate-200 p-3';
+  bottom.className = 'flex flex-1 flex-col gap-2 border-t border-tableau p-3';
 
   const field = document.createElement('input');
   field.type = 'text';
   field.value = firstName;
   field.placeholder = 'Prénom';
   field.autocomplete = 'off';
-  field.className = 'field w-full text-[1.05rem]';
+  field.className = 'field w-full text-lead';
   field.setAttribute('list', 'known-names');
   field.setAttribute('aria-label', `Prénom pour ${originalName}`);
 
@@ -362,7 +445,7 @@ function createRow(
   const statusArea = document.createElement('p');
 
   const origin = document.createElement('p');
-  origin.className = 'mt-auto pt-1 text-[0.8rem] break-all text-slate-500';
+  origin.className = 'mt-auto pt-1 text-micro break-all text-slate-500';
   origin.textContent = originalName;
 
   bottom.append(field, nameArea, statusArea, origin);
@@ -394,7 +477,9 @@ function createRow(
   });
   // Re-sorting waits for the end of the edit: moving the card on every letter
   // would make the photo jump under the teacher's fingers.
-  field.addEventListener('change', sortCards);
+  field.addEventListener('change', () => {
+    sortCards(row.card);
+  });
 
   return row;
 }
@@ -415,10 +500,10 @@ function renderRow(row: Row): void {
     el.subfolders.checked && row.targetName ? `${sanitiseForFileName(firstNameOf(row))}\\` : '';
 
   if (row.targetName) {
-    row.nameArea.className = 'font-mono text-[0.85rem] break-all text-slate-700';
+    row.nameArea.className = 'font-mono text-caption break-all text-slate-700';
     row.nameArea.textContent = folder + row.targetName;
   } else {
-    row.nameArea.className = 'text-[0.85rem] text-amber-900';
+    row.nameArea.className = 'text-caption text-amber-900';
     row.nameArea.textContent = 'Pas encore de nom de fichier';
   }
 
@@ -484,7 +569,7 @@ function rowState(row: Row): RowState {
  * `rows` is never reordered — numbering follows the order of the photos, not
  * the order they are displayed in.
  */
-function sortCards(): void {
+function sortCards(moved?: HTMLElement): void {
   const order = [...rows.filter((row) => !firstNameOf(row)), ...rows.filter(firstNameOf)];
   if (order.every((row, index) => el.results.children[index] === row.card)) return;
 
@@ -498,6 +583,22 @@ function sortCards(): void {
     activeField.focus();
     if (caret !== null) activeField.setSelectionRange(caret, caret);
   }
+
+  if (moved) flash(moved);
+}
+
+/** The card is somewhere else now; the ring is how she follows it there. */
+function flash(card: HTMLElement): void {
+  card.classList.remove('photo-card-moved');
+  card.getBoundingClientRect(); // restarts the animation on a second edit
+  card.classList.add('photo-card-moved');
+  card.addEventListener(
+    'animationend',
+    () => {
+      card.classList.remove('photo-card-moved');
+    },
+    { once: true },
+  );
 }
 
 function refreshSummary(): void {
@@ -530,12 +631,43 @@ function refreshSummary(): void {
       ? '1 photo n’a pas encore de prénom.'
       : `${toFix} photos n’ont pas encore de prénom.`;
   el.allReady.hidden = !scanDone || toFix > 0 || rows.length === 0;
+
+  // The remedy is on the phone, not in the app, so saying "illisible" per photo
+  // leaves her with nothing to do.
+  const heic = rows.filter((row) => !row.readable).length;
+  el.heicNote.hidden = heic === 0;
+  el.heicNote.textContent =
+    heic === 0
+      ? ''
+      : `Dont ${heic} au format HEIC, que le navigateur ne sait pas ouvrir. Sur l’iPhone, ` +
+        'réglez Appareil photo › Formats sur « Le plus compatible » pour les prochaines photos, ' +
+        'et convertissez celles-ci en JPEG.';
 }
 
 function refreshCopyButton(): void {
   const pending = rows.some((row) => firstNameOf(row) && !row.copied);
   const destinationReady = !supportsDirectories || destination !== null;
   el.copy.disabled = !(scanDone && pending && destinationReady);
+
+  const reason = el.copy.disabled ? copyBlockedReason(pending, destinationReady) : '';
+  el.copyBlocked.textContent = reason;
+  el.copyBlocked.hidden = reason === '';
+}
+
+/**
+ * A dead button explains nothing on its own, and the teacher has no screen
+ * reader to read a description to her. This block is only on screen from the
+ * moment the reading starts, so it never has to word the "not scanned yet" case.
+ */
+function copyBlockedReason(pending: boolean, destinationReady: boolean): string {
+  if (!scanDone) return 'Lecture des QR codes en cours…';
+  if (!destinationReady) return 'Choisissez le dossier de destination, à l’étape 2.';
+  if (!pending && rows.length > 0) {
+    return rows.some(firstNameOf)
+      ? 'Toutes les photos qui ont un prénom sont déjà copiées.'
+      : 'Aucune photo n’a encore de prénom : une photo sans prénom n’est pas copiée.';
+  }
+  return '';
 }
 
 // --- Copying ----------------------------------------------------------------
