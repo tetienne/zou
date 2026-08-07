@@ -93,18 +93,15 @@ const sourceLink = (): Plugin => ({
   },
 });
 
-// The address the site is served from. Three of the tags below have to carry an
-// absolute one — the canonical link, `og:url`, `og:image` — and a wrong absolute
-// address is worse than none at all: a canonical pointing at somebody else's
-// copy asks the search engine to index that copy *instead of* this one. So it is
-// derived from the CI environment, and when it cannot be derived — `npm run dev`,
-// a local build — those three tags are simply not emitted. Everything else on
-// the page is unaffected.
+// The address the site is served from, for the three tags that have to be
+// absolute — canonical, `og:url`, `og:image`. A wrong one is worse than none: a
+// canonical pointing at somebody else's copy asks the engine to index that copy
+// *instead of* this one. So it returns undefined rather than a guess, and those
+// three tags are then left out.
 //
-// GitHub Pages serves a project page at `https://<owner>.github.io/<repo>/` with
-// the owner lower-cased, and the repository named `<owner>.github.io` at the
-// root instead. `SITE_URL` overrides the derivation, which is what a custom
-// domain (a `CNAME` file) needs.
+// Only the host is derived; the path is `base`, the same value every other link
+// on the page is built from. Deriving it a second time here would let the
+// canonical say `/zou/` while the stylesheet is served from `/Zou/`.
 const siteUrl = ((): string | undefined => {
   const { SITE_URL } = process.env;
   if (SITE_URL) return SITE_URL.endsWith('/') ? SITE_URL : `${SITE_URL}/`;
@@ -112,16 +109,17 @@ const siteUrl = ((): string | undefined => {
   // follow from the environment, so it is left to SITE_URL.
   if (!GITHUB_REPOSITORY || (GITHUB_SERVER_URL ?? 'https://github.com') !== 'https://github.com')
     return undefined;
-  const [owner, repository] = GITHUB_REPOSITORY.toLowerCase().split('/');
-  if (!owner || !repository) return undefined;
-  const host = `https://${owner}.github.io/`;
-  return repository === `${owner}.github.io` ? host : `${host}${repository}/`;
+  const owner = GITHUB_REPOSITORY.split('/')[0]?.toLowerCase();
+  if (!owner) return undefined;
+  return `https://${owner}.github.io${base}`;
 })();
 
-// The pages a search engine is told about, in the order a reader meets them.
+// The pages, in the order a reader meets them. One list: the build entry points
+// and the sitemap, so a fourth page cannot be built and left unannounced.
 const PAGES = ['index.html', 'labels.html', 'photos.html'] as const;
 
-const addressOf = (page: string): string => `${siteUrl ?? '/'}${page === 'index.html' ? '' : page}`;
+const addressOf = (site: string, page: string): string =>
+  `${site}${page === 'index.html' ? '' : page}`;
 
 // The social preview, 1200 × 630 in `public/`. Regenerate with
 // `node scripts/build-og-image.js` after changing what the site says it does.
@@ -182,7 +180,7 @@ const seoTags = (): Plugin => ({
       ];
 
       if (siteUrl) {
-        const address = addressOf(page);
+        const address = addressOf(siteUrl, page);
         tags.push(
           { tag: 'link', attrs: { rel: 'canonical', href: address }, injectTo: 'head' },
           meta({ property: 'og:url', content: address }),
@@ -205,7 +203,7 @@ const seoTags = (): Plugin => ({
             '@type': 'WebApplication',
             name: 'Zou',
             description,
-            ...(siteUrl ? { url: addressOf(page) } : {}),
+            ...(siteUrl ? { url: addressOf(siteUrl, page) } : {}),
             applicationCategory: 'EducationalApplication',
             operatingSystem: 'Windows, macOS, Linux, ChromeOS',
             inLanguage: 'fr',
@@ -232,7 +230,9 @@ const seoTags = (): Plugin => ({
   // sheet changed because a colour in the stylesheet did.
   generateBundle() {
     if (!siteUrl) return;
-    const urls = PAGES.map((page) => `  <url><loc>${addressOf(page)}</loc></url>`).join('\n');
+    const urls = PAGES.map((page) => `  <url><loc>${addressOf(siteUrl, page)}</loc></url>`).join(
+      '\n',
+    );
     this.emitFile({
       type: 'asset',
       fileName: 'sitemap.xml',
@@ -247,11 +247,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     rollupOptions: {
-      input: {
-        home: resolve(import.meta.dirname, 'index.html'),
-        labels: resolve(import.meta.dirname, 'labels.html'),
-        photos: resolve(import.meta.dirname, 'photos.html'),
-      },
+      input: Object.fromEntries(
+        PAGES.map((page) => [page.replace('.html', ''), resolve(import.meta.dirname, page)]),
+      ),
     },
   },
   // The worker is bundled by a build of its own, which does not inherit the

@@ -143,9 +143,10 @@ Three decisions worth the sentence they cost:
 
 - **An address that cannot be derived is not guessed.** The canonical link says
   "this is the real copy of this page"; pointed at the wrong site it asks the
-  engine to index that site instead. It comes from `GITHUB_REPOSITORY`, so a
-  fork gets its own, and under `npm run dev` — where there is no published
-  address — the three absolute tags are left out rather than filled with
+  engine to index that site instead. Its host comes from `GITHUB_REPOSITORY` and
+  its path from `VITE_BASE` — the same value every other link on the page is
+  built from — so a fork gets its own, and under `npm run dev`, where there is no
+  published address, the three absolute tags are left out rather than filled with
   upstream's. `SITE_URL` overrides the derivation, which is what a custom domain
   needs.
 - **No `robots.txt`.** A crawler only reads the one at the root of the host, and

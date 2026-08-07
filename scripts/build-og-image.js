@@ -12,7 +12,7 @@
 // Set CHROME_PATH to point at a browser the search below does not find.
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -37,15 +37,6 @@ const findChrome = () => {
   ];
   const found = usual.find((path) => existsSync(path));
   if (found) return found;
-
-  // Playwright keeps its browsers in a versioned directory.
-  const pool = process.env.PLAYWRIGHT_BROWSERS_PATH ?? '/opt/pw-browsers';
-  if (existsSync(pool)) {
-    for (const entry of readdirSync(pool)) {
-      const path = join(pool, entry, 'chrome-linux', 'chrome');
-      if (entry.startsWith('chromium-') && existsSync(path)) return path;
-    }
-  }
 
   throw new Error('No Chromium found. Install one, or point CHROME_PATH at it.');
 };
