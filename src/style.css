@@ -93,28 +93,42 @@
 
   /* --- Printable label sheet --------------------------------------------- */
 
-  /* Three labels per row is the default; the teacher can ask for wider or
-     narrower ones. The gap is the pair of scissors' margin. */
+  /* One page per element, so a page break never falls inside a label: what a
+     `.sheet-paper` holds provably fits on A4 (see label-layout.ts, which sets
+     every `--…` below). Narrow screens scroll the sheet rather than the page. */
   .label-sheet {
-    @apply mt-4 grid gap-[4mm];
+    @apply mt-4 flex flex-col items-center gap-6 overflow-x-auto;
   }
 
-  .sheet-small {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .sheet-page + .sheet-page {
+    break-before: page;
   }
 
-  .sheet-medium {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .sheet-page-number {
+    @apply mb-1 text-center text-[0.9rem] text-slate-500;
   }
 
-  .sheet-large {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .sheet-paper {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), var(--label-width));
+    gap: var(--label-gap);
+    /* On screen the whole sheet of paper is drawn, margins included, so the
+       teacher sees the page she is about to print. On paper the `@page` rule
+       provides those margins, and the print rules below take them off here. */
+    width: calc(var(--paper-width) + 2 * var(--paper-margin));
+    padding: var(--paper-margin);
+    @apply rounded-sm border border-slate-300 bg-white shadow-sm;
   }
 
   /* Colour comes from the first name and from the chosen palette (see
      label-theme.ts); labels.ts sets `--ink` and `--tint` on each card. */
   .label-card {
-    @apply break-inside-avoid rounded-2xl border-2 border-dashed p-2 text-center;
+    @apply break-inside-avoid rounded-2xl border-dashed text-center;
+    border-width: var(--label-border);
+    padding: var(--label-padding);
+    /* The height every page of the sheet was counted with. A first name long
+       enough to need a third line grows its label instead of being cut. */
+    min-height: var(--label-height);
     border-color: var(--ink, #111827);
     background: var(--tint, #ffffff);
     /* Without this, browsers drop background colours when printing and the
@@ -126,60 +140,59 @@
   /* White patch under the code: a QR read from a photo needs a light, even
      background, so the tint stops at the frame. */
   .label-qr {
-    @apply rounded-xl bg-white px-1.5 pt-1.5 pb-1;
+    @apply rounded-xl bg-white;
+    padding: var(--frame-padding);
     color: var(--ink, #111827);
   }
 
   .label-card svg {
     @apply mx-auto block h-auto w-full;
-    max-width: 44mm;
-  }
-
-  .sheet-small .label-card svg {
-    max-width: 30mm;
-  }
-
-  .sheet-large .label-card svg {
-    max-width: 62mm;
+    max-width: var(--qr-size);
   }
 
   .label-name {
-    @apply mt-1.5 flex items-center justify-center gap-1.5 text-[15pt] leading-tight font-extrabold break-words;
+    @apply flex items-center justify-center gap-[0.3em] font-extrabold break-words;
+    margin-top: var(--caption-gap);
+    /* The two lines every label height was counted with; `line-height` is the
+       `LINE_HEIGHT` of label-layout.ts. */
+    min-height: var(--caption-height);
+    font-size: var(--name-size);
+    line-height: 1.2;
     color: var(--ink, #111827);
   }
 
-  .sheet-small .label-name {
-    @apply gap-1 text-[11pt];
-  }
-
-  .sheet-large .label-name {
-    @apply mt-2 gap-2 text-[21pt];
-  }
-
   .label-mascot {
-    @apply text-[17pt] leading-none;
-  }
-
-  .sheet-small .label-mascot {
-    @apply text-[12pt];
-  }
-
-  .sheet-large .label-mascot {
-    @apply text-[24pt];
+    @apply leading-none;
+    font-size: var(--mascot-size);
   }
 }
 
 @media print {
   @page {
     size: A4;
+    /* PAGE.margin in label-layout.ts, where the page is filled. */
     margin: 8mm;
   }
 
+  /* No padding of our own: the `@page` margin is the whole margin, and the
+     screen's bottom padding alone was enough to spill a blank ninth page out
+     of a sheet that ended exactly on the eighth. */
   body {
-    @apply bg-white text-[12pt];
+    @apply bg-white p-0 text-[12pt];
   }
 
   .no-print {
     display: none !important;
+  }
+
+  /* The paper itself is now the page: no preview frame, and no margin of our
+     own on top of the one `@page` already leaves. */
+  .label-sheet {
+    @apply mt-0 block overflow-visible;
+  }
+
+  .sheet-paper {
+    @apply rounded-none border-0 bg-transparent p-0 shadow-none;
+    width: var(--paper-width);
   }
 }
