@@ -1,4 +1,11 @@
-@import 'tailwindcss';
+/* Classes only ever appear in the three pages and in the code that builds the
+   label sheet, so that is all Tailwind is allowed to scan. Left to detect its
+   own sources it reads every file in the repository, and an English word in a
+   comment or in the README is enough to emit a utility nobody uses: `fixed`,
+   `static`, `visible` and `lowercase` were all shipped that way. */
+@import 'tailwindcss' source(none);
+@source '../*.html';
+@source './**/*.ts';
 
 @theme {
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
