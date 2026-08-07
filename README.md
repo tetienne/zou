@@ -107,8 +107,9 @@ deploy to github-pages".
 ```bash
 npm install
 npm run dev           # local server with hot reload
-npm run verify        # format:check, lint, typecheck, tests, build — same as CI
+npm run verify        # format:check, lint, typecheck, all tests, build — as CI
 npm test              # unit tests (Vitest)
+npm run test:browser  # browser tests (Playwright), on the built site
 npm run build         # static site into dist/
 npm run preview       # serve dist/ to check the build
 ```
@@ -137,10 +138,12 @@ Business logic is kept away from the DOM: `names.ts` and `filing.ts` are tested
 without a browser, and `filing.ts` only touches the disk through an `exists`
 predicate that tests replace.
 
-`npm test` does not cover the native folder picker, real camera photos, the
-worker pool, or the IndexedDB half of `folder-memory.ts` — those need a browser
-and are checked by hand. What that file decides with a remembered handle is
-tested, since that is where the mistakes are.
+`npm test` runs in Node: the worker pool, the pages of the sheet and writing to a
+folder are covered by `npm run test:browser` in Chromium, which needs the browser
+installed once (`npx playwright install chromium`). Still checked by hand: the
+native folder picker, the download fallback, real camera photos, and the
+IndexedDB half of `folder-memory.ts` — what that file decides with a remembered
+handle is tested, since that is where the mistakes are.
 
 ### Contrast
 

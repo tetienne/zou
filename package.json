@@ -15,7 +15,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build"
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run test:browser",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "qrcode-generator": "^2.0.4",
@@ -25,6 +26,7 @@
     "@eslint/js": "^10.0.1",
     "@html-eslint/eslint-plugin": "^0.64.0",
     "@html-eslint/parser": "^0.64.0",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/html-minifier-terser": "^7.0.2",
     "@types/node": "^26.1.2",

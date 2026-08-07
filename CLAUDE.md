@@ -33,17 +33,31 @@ README for the exact boundary.
 ## Before saying it works
 
 ```bash
-npm run verify   # format:check, lint, typecheck, tests, build
+npm run verify   # format:check, lint, typecheck, tests, build, browser tests
 ```
 
 `npm run verify` is the gate; the CI runs the same thing. Nothing is "done"
-until it passes.
+until it passes. The browser tests need Chromium once:
+`npx playwright install chromium`.
 
 Tests carry the intent, not just the assertion: `photo-reading.test.ts` builds
 fake photos by 3D projection because that, not a rotated image, is what a
 hand-held photo looks like. Extend that suite rather than weakening it — and if
 a test documents a limit that starts passing, that is news to notice, not a
 failure to silence.
+
+Anything the DOM does — the worker pool, the pages of the label sheet, writing to
+a folder — belongs in `tests/` and needs Chromium; `npm test` cannot see it. When
+you add one, break the code on purpose and check that test, and only that test,
+goes red. A browser test that has never failed is not known to work.
+
+Those tests drive the **built** site: the worker URL and the `.wasm` path are
+rewritten at build time, so a dev-server run would miss exactly the breakage they
+exist for. `showDirectoryPicker` opens a native window no test can drive, hence
+the two fakes in `tests/fake-folders.ts` — a source drawing its photos from the
+same QR matrix the label page uses, and a destination recording what it received.
+Nothing binary is committed, and a test label stays one the app would print.
+Judging the decoder is not their job; `photo-reading.test.ts` owns that.
 
 ## The one constraint that breaks the app silently
 
