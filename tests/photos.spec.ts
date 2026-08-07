@@ -48,7 +48,7 @@ async function scan(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Choisir le dossier des photos' }).click();
   await expect(page.getByText(/— 8 photos/)).toBeVisible();
   await page.getByRole('button', { name: 'Analyser les photos' }).click();
-  await expect(page.getByText(/prénom\(s\) reconnu/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/prénoms? reconnus? sur/)).toBeVisible({ timeout: 60_000 });
 }
 
 let failures: string[] = [];
@@ -74,7 +74,7 @@ test('reads a folder in workers and keeps the order of the shelf', async ({ page
   await page.goto('photos.html');
   await scan(page);
 
-  await expect(page.getByText('6 prénom(s) reconnu(s) sur 8 photo(s).')).toBeVisible();
+  await expect(page.getByText('6 prénoms reconnus sur 8 photos.')).toBeVisible();
 
   const cards = await readGallery(page);
   expect(cards).toHaveLength(8);
@@ -135,7 +135,7 @@ test('files each photo under its own name, without overwriting', async ({ page }
 
   await page.getByRole('button', { name: 'Choisir le dossier de destination' }).click();
   await page.getByRole('button', { name: 'Copier les photos' }).click();
-  await expect(page.getByText(/photos? copiées? —/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/photos? copiées?\. Et zou/)).toBeVisible({ timeout: 60_000 });
 
   const written = await writtenFiles(page);
   expect(Object.keys(written).sort()).toEqual(
@@ -149,7 +149,7 @@ test('files each photo under its own name, without overwriting', async ({ page }
     ].sort(),
   );
   // The photos with no first name are the two that stayed behind.
-  await expect(page.getByText("6 photos copiées — et zou, c'est rangé !")).toBeVisible();
+  await expect(page.getByText("6 photos copiées. Et zou, c'est rangé.")).toBeVisible();
 });
 
 test('reads the folder anyway when the browser has no workers', async ({ page }) => {
@@ -160,7 +160,7 @@ test('reads the folder anyway when the browser has no workers', async ({ page })
   await page.goto('photos.html');
   await scan(page);
 
-  await expect(page.getByText('6 prénom(s) reconnu(s) sur 8 photo(s).')).toBeVisible();
+  await expect(page.getByText('6 prénoms reconnus sur 8 photos.')).toBeVisible();
   const cards = await readGallery(page);
   expect(cards.filter((card) => card.firstName === 'Léa').map((card) => card.origin)).toEqual([
     'photo-01.png',
@@ -173,7 +173,7 @@ test('rebuilds the gallery on a second scan', async ({ page }) => {
   await page.goto('photos.html');
   await scan(page);
   await page.getByRole('button', { name: 'Analyser les photos' }).click();
-  await expect(page.getByText(/prénom\(s\) reconnu/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/prénoms? reconnus? sur/)).toBeVisible({ timeout: 60_000 });
 
   expect(await page.locator('.photo-card').count()).toBe(8);
   // The thumbnails of the first pass were released; the new ones must still show.
