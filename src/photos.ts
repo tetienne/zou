@@ -348,7 +348,7 @@ async function scanPhotos(): Promise<void> {
   el.scanProgress.hidden = false;
   el.scanProgress.max = files.length;
   el.scanProgress.value = 0;
-  el.scanStatus.textContent = `Lecture de ${files.length} photo(s)…`;
+  el.scanStatus.textContent = `Lecture des photos (0/${files.length})…`;
 
   let recognised = 0;
 
@@ -379,7 +379,7 @@ async function scanPhotos(): Promise<void> {
   el.scanProgress.hidden = true;
   el.scan.disabled = false;
   scanDone = true;
-  el.scanStatus.textContent = `${recognised} prénom(s) reconnu(s) sur ${files.length} photo(s).`;
+  el.scanStatus.textContent = `${recognised} prénom${plural(recognised)} reconnu${plural(recognised)} sur ${files.length} photo${plural(files.length)}.`;
   refreshKnownNames();
   recomputeNames();
   sortCards();
@@ -705,7 +705,7 @@ async function copyPhotos(): Promise<void> {
   // report of losses would read as the app not having noticed.
   el.copyStatus.textContent = failed
     ? `${copied} photo${plural(copied)} copiée${plural(copied)}, ${failed} en échec.`
-    : `${copied} photo${plural(copied)} copiée${plural(copied)} — et zou, c'est rangé !`;
+    : `${copied} photo${plural(copied)} copiée${plural(copied)}. Et zou, c'est rangé.`;
   refreshSummary();
   refreshCopyButton();
 }
