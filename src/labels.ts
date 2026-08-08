@@ -1,16 +1,17 @@
 // Printable sheet of QR labels: one QR per first name, repeated n times.
+import './fonts';
 import './style.css';
 import { qrCodeSvg } from './qr-generation';
 import {
   DEFAULT_OPTIONS,
-  labelTheme,
   readableInk,
   type LabelOptions,
-  type LabelSize,
   type MascotSet,
   type PaletteName,
+  type LabelSize,
 } from './label-theme';
-import { BOX, GAP, MASCOT_RATIO, PAGE, pages, printableArea, sheetLayout } from './label-layout';
+import { pages } from './label-layout';
+import { applyLayout, labelCard } from './label-card';
 import { required } from './dom';
 
 // The prefix is the app's old name, and it stays: it identifies data already
@@ -33,6 +34,8 @@ const sizeField = required('size', HTMLSelectElement);
 const sheet = required('sheet', HTMLDivElement);
 const summary = required('summary', HTMLParagraphElement);
 const printButton = required('print', HTMLButtonElement);
+const printReason = required('print-reason', HTMLParagraphElement);
+const railSteps = [...required('rail', HTMLOListElement).children];
 
 /** Names of the last generated sheet, so a style change redraws it at once. */
 let printedNames: string[] = [];
@@ -40,6 +43,7 @@ let printedNames: string[] = [];
 namesField.value = localStorage.getItem(NAMES_STORAGE_KEY) ?? '';
 namesField.addEventListener('input', () => {
   localStorage.setItem(NAMES_STORAGE_KEY, namesField.value);
+  showProgress();
 });
 
 showOptions(storedOptions());
@@ -49,6 +53,7 @@ for (const field of [paletteField, colourField, mascotsField, sizeField]) {
   field.addEventListener('input', optionsChanged);
 }
 optionsChanged();
+showProgress();
 
 required('generate', HTMLButtonElement).addEventListener('click', () => {
   printedNames = namesField.value
@@ -56,6 +61,7 @@ required('generate', HTMLButtonElement).addEventListener('click', () => {
     .map((line) => line.trim())
     .filter(Boolean);
   draw();
+  showProgress();
 });
 
 printButton.addEventListener('click', () => {
@@ -70,38 +76,45 @@ function optionsChanged(): void {
   // darker, and seeing it beats discovering it on paper.
   colourRow.hidden = options.palette !== 'single';
   appliedColour.style.background = readableInk(options.colour);
-  showLayout(options.size);
+  applyLayout(sheet, options.size);
   if (printedNames.length > 0) draw();
 }
 
-/**
- * Hands the sheet's measurements to the stylesheet. Every length a label is
- * made of comes from label-layout.ts, so what the page count was computed with
- * and what the browser draws cannot drift apart.
- */
-function showLayout(size: LabelSize): void {
-  const layout = sheetLayout(size);
-  const variables: Record<string, string> = {
-    '--paper-width': mm(printableArea().width),
-    '--paper-margin': mm(PAGE.margin),
-    '--label-gap': mm(GAP),
-    '--columns': String(layout.columns),
-    '--label-width': mm(layout.labelWidth),
-    '--label-height': mm(layout.labelHeight),
-    '--label-border': mm(BOX.border),
-    '--label-padding': mm(BOX.padding),
-    '--frame-padding': mm(BOX.framePadding),
-    '--caption-gap': mm(BOX.captionGap),
-    '--caption-height': mm(layout.captionHeight),
-    '--qr-size': mm(layout.qrSize),
-    '--name-size': mm(layout.nameSize),
-    '--mascot-size': mm(layout.nameSize * MASCOT_RATIO),
-  };
-  for (const [name, value] of Object.entries(variables)) sheet.style.setProperty(name, value);
-}
+/** A tick rather than a number, so a done step does not read by colour alone. */
+const TICK =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" ' +
+  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="size-5">' +
+  '<path d="m4 13 5 5L20 6"/></svg>';
 
-function mm(length: number): string {
-  return `${String(Math.round(length * 100) / 100)}mm`;
+/**
+ * Where the teacher is in the three moments of the page. The trail follows what
+ * she has actually done — a list typed, then a sheet drawn — rather than which
+ * section happens to be on screen, since all three are.
+ */
+function showProgress(): void {
+  const typedAName = namesField.value.split('\n').some((line) => line.trim() !== '');
+  const current = printedNames.length > 0 ? 3 : typedAName ? 2 : 1;
+
+  railSteps.forEach((step, index) => {
+    const number = index + 1;
+    const done = number < current;
+    step.classList.toggle('is-done', done);
+    step.classList.toggle('is-current', number === current);
+    if (number === current) step.setAttribute('aria-current', 'step');
+    else step.removeAttribute('aria-current');
+
+    const disc = step.querySelector('.step-disc');
+    if (disc) disc.innerHTML = done ? TICK : String(number);
+
+    const state = step.querySelector('.eyebrow');
+    if (state) {
+      state.textContent = done
+        ? `Étape ${String(number)} · faite`
+        : number === current
+          ? `Étape ${String(number)} · en cours`
+          : `Étape ${String(number)}`;
+    }
+  });
 }
 
 function draw(): void {
@@ -116,6 +129,7 @@ function draw(): void {
   if (printedNames.length === 0) {
     summary.textContent = 'Tapez au moins un prénom.';
     printButton.disabled = true;
+    printReason.hidden = false;
     return;
   }
 
@@ -139,6 +153,7 @@ function draw(): void {
   // she just typed.
   summary.textContent = '';
   printButton.disabled = false;
+  printReason.hidden = true;
 }
 
 /**
@@ -198,40 +213,4 @@ function storedOptions(): LabelOptions {
   } catch {
     return DEFAULT_OPTIONS;
   }
-}
-
-function labelCard(firstName: string, svg: string, options: LabelOptions): HTMLDivElement {
-  const theme = labelTheme(firstName, options);
-
-  const card = document.createElement('div');
-  card.className = 'label-card';
-  card.style.setProperty('--ink', theme.ink);
-  card.style.setProperty('--tint', theme.tint);
-
-  const frame = document.createElement('div');
-  frame.className = 'label-qr';
-  // `svg` is built by us from the QR matrix, not from user input: only the
-  // first name is typed, and it goes through textContent just below.
-  frame.innerHTML = svg;
-  card.append(frame);
-
-  const caption = document.createElement('div');
-  caption.className = 'label-name';
-
-  if (theme.mascot) {
-    const mascot = document.createElement('span');
-    // Decoration only: a screen reader announcing « renard » before the name
-    // would help nobody.
-    mascot.setAttribute('aria-hidden', 'true');
-    mascot.className = 'label-mascot';
-    mascot.textContent = theme.mascot;
-    caption.append(mascot);
-  }
-
-  const name = document.createElement('span');
-  name.textContent = firstName;
-  caption.append(name);
-
-  card.append(caption);
-  return card;
 }

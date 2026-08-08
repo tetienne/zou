@@ -8,7 +8,13 @@
 @source './**/*.ts';
 
 @theme {
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Self-hosted from `@fontsource-*` (see fonts.ts): a school machine often
+     sits behind a proxy that blocks fonts.googleapis.com, and the fallback
+     would be the system stack the voice was chosen to replace. */
+  --font-sans: 'Karla', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  /* One job only: how often she does this. */
+  --font-hand: 'Caveat', 'Segoe Script', cursive;
 
   /* Six steps, and nothing between them. The pages used to pick a size per
      element — 0.85, 0.9, 0.92 and 0.95 rem all appeared, close enough to read
@@ -27,16 +33,90 @@
   --text-h2--line-height: 1.3;
   --text-h1--line-height: 1.15;
 
-  /* Colour carries meaning here — a first name's identity on a label, a photo
-     waiting for one — so the chrome keeps out of the way and owns one value:
-     the rule. `slate-300` on the page background sat at 1.42:1, low enough that
-     a card only existed once the pointer was over it. */
-  --color-tableau: #94a3a8;
+  /* Six steps, and nothing between them — the same discipline as the text
+     sizes above, which the pages did not have: `mt-1`, `mt-3`, `mt-4`, `mt-6`,
+     `mt-8` and `mt-10` all appeared on the home page, six values for three
+     intentions. Named after what they separate, not after how big they are.
+
+     A name here is also a utility suffix, so it must not collide with one
+     Tailwind already ships: `--spacing-block` quietly redefined `inline-block`
+     as `inline-size: 1.75rem`, and the back link on the labels page went to one
+     word per line. */
+  --spacing-hair: 0.25rem;
+  --spacing-word: 0.5rem;
+  --spacing-line: 1rem;
+  --spacing-para: 1.75rem;
+  --spacing-section: 3rem;
+  --spacing-page: 5rem;
+
+  /* Cream paper, a blue-night ink, and the red of the margin rule. Colour
+     carries meaning here — a first name's identity on a label, a photo waiting
+     for one — so the chrome keeps out of the way and owns one value: the rule.
+     Every ratio below is against `--color-paper` unless said otherwise. */
+  --color-paper: #fbf6ec;
+  --color-paper-shade: #f4ebd7;
+  --color-card: #fffdf7;
+
+  --color-ink: #232457; /* body text — 13.3:1 */
+  --color-ink-soft: #56548a; /* secondary text and control borders — 6.4:1 */
+  --color-red-ink: #a8352b; /* every red word — 6.1:1 */
+  --color-green-ink: #1f6b45; /* confirmation — 6.0:1 */
+  --color-green-tint: #e6f1e7;
+
+  /* A photo the browser could not even open: nothing to correct here, so it is
+     not the red of a thing to redo. 6.6:1 on the paper, 6.3:1 on its own tint. */
+  --color-amber-ink: #7a4f00;
+  --color-amber-tint: #fbf0d4;
+  /* `--color-red-ink` on this tint is 5.5:1. */
+  --color-red-tint: #fbe8e3;
+
+  /* Never text: 4.4:1 clears the 3:1 a focus ring and a rule need, not the
+     4.5:1 a word does. */
+  --color-margin-red: #c64a3f;
+
+  /* Every card on every page is delimited by this one border, so it is a
+     non-text contrast under WCAG 1.4.11: `#94a3a8` sat at 2.4:1 on the paper
+     and 2.6:1 on a card, under the 3:1 asked. This is the ink diluted to a
+     pencil grey — 3.7:1 on the paper, 3.9:1 on a card. */
+  --color-tableau: #7e7d96;
+
+  /* Decorative only, and never load-bearing: the Seyès ruling of the paper,
+     the separators inside a card, and the strip of tape on a taped card. */
+  --color-rule: #cddcee;
+  --color-rule-strong: #b0c8e2;
+  --color-hairline: #cbc3ae;
+  --color-tape: #e2cd98;
 }
 
 @layer base {
+  /* The ruling is on the page itself, edge to edge, not on a sheet floating
+     inside a frame: three gradients rather than an image, so it costs no
+     request and stays sharp at any zoom. 28px for the fine rules and 112px for
+     the strong one is the 4:1 rhythm of real Seyès paper. */
   body {
-    @apply text-body bg-slate-50 leading-relaxed text-slate-900;
+    @apply text-body bg-paper text-ink leading-relaxed;
+    background-image:
+      repeating-linear-gradient(to bottom, transparent 0 27px, var(--color-rule) 27px 28px),
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 111px,
+        var(--color-rule-strong) 111px 112px
+      ),
+      repeating-linear-gradient(to right, transparent 0 27px, rgb(176 200 226 / 0.35) 27px 28px);
+  }
+
+  /* One focus ring for the whole site: the red pencil, offset onto the paper. */
+  a:focus-visible {
+    @apply outline-margin-red rounded-sm outline-2 outline-offset-2;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    /* A serif set at title size opens up; the display face is drawn for it. */
+    letter-spacing: -0.015em;
+    text-wrap: balance;
   }
 
   /* The `hidden` attribute must always win: without this rule a display
@@ -47,37 +127,281 @@
 }
 
 @layer components {
+  /* The focus ring is the red pencil, everywhere, and it is offset so it always
+     lands on the paper (4.4:1) rather than on the control it circles. */
   .button,
   .button-secondary {
-    @apply cursor-pointer rounded-lg border px-4 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:opacity-45;
+    @apply focus-visible:outline-margin-red cursor-pointer rounded-lg border px-4 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-45;
   }
 
   .button {
-    @apply border-blue-700 bg-blue-700 text-white hover:bg-blue-800 disabled:hover:bg-blue-700;
+    @apply border-ink bg-ink text-card;
+  }
+
+  .button:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--color-ink) 88%, black);
   }
 
   .button-secondary {
-    @apply border-blue-700 bg-white text-blue-700 hover:bg-blue-50 disabled:hover:bg-white;
-  }
-
-  .step {
-    @apply border-tableau mb-4 rounded-xl border bg-white px-5 py-4;
+    @apply border-ink-soft bg-card text-ink hover:bg-paper-shade disabled:hover:bg-card;
   }
 
   /* `slate-400` gave the border 2.63:1 on white, under the 3:1 WCAG asks of a
      control's own outline. */
   .field {
-    @apply rounded-md border border-slate-500 bg-white px-2 py-1 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-700;
+    @apply border-ink-soft bg-card focus-visible:outline-margin-red rounded-md border px-2 py-1 focus-visible:outline-2 focus-visible:outline-offset-1;
   }
 
   .hint {
-    @apply text-caption text-slate-500;
+    @apply text-caption text-ink-soft;
+  }
+
+  /* A folder, written the way the file explorer writes it — and, while none is
+     chosen, a dashed blank waiting to be filled in. */
+  .path {
+    @apply text-caption bg-paper-shade border-hairline px-word py-hair border-b-2 font-mono break-words;
+  }
+
+  .path[data-empty] {
+    @apply text-ink-soft font-sans italic;
+    border-bottom-style: dashed;
+  }
+
+  /* The small capitals that name the moment above a title. */
+  .eyebrow {
+    @apply text-micro text-ink-soft font-bold tracking-widest uppercase;
+  }
+
+  .backlink {
+    @apply gap-hair text-ink-soft hover:text-red-ink inline-flex items-center font-bold;
+  }
+
+  /* --- The step trail ----------------------------------------------------- */
+
+  /* A page here is one task cut into a few moments, and the trail says which
+     one she is in. State is never the colour alone: a done step also swaps its
+     number for a tick and its kicker for the word « faite ». */
+  .step-rail-bar {
+    @apply border-tableau gap-line pt-line pb-word mx-auto flex max-w-5xl flex-wrap items-center justify-between border-b-3 border-double;
+  }
+
+  .step-rail {
+    @apply gap-word flex flex-wrap items-center;
+  }
+
+  .step-rail li {
+    @apply gap-word flex items-center;
+  }
+
+  .step-rail li + li::before {
+    content: '';
+    @apply bg-tableau mr-word hidden h-[3px] w-8 sm:block;
+  }
+
+  .step-rail li.is-done + li::before {
+    @apply bg-green-ink;
+  }
+
+  .step-disc {
+    @apply border-ink-soft bg-card text-ink font-display grid size-10 shrink-0 place-items-center rounded-full border-2 font-bold;
+  }
+
+  .step-rail li.is-done .step-disc {
+    @apply border-green-ink bg-green-ink text-card;
+  }
+
+  /* The double ring is what makes the current step readable at a glance among
+     four discs that otherwise differ only in fill. */
+  .step-rail li.is-current .step-disc {
+    @apply border-ink bg-ink text-card;
+    box-shadow:
+      0 0 0 4px var(--color-paper-shade),
+      0 0 0 6px var(--color-ink);
+  }
+
+  .step-rail-text {
+    @apply flex flex-col leading-tight;
+  }
+
+  .step-rail li.is-done .eyebrow {
+    @apply text-green-ink;
+  }
+
+  /* --- A step: its head, its panel, its action ---------------------------- */
+
+  .stage-head {
+    @apply gap-line mt-section flex items-start;
+  }
+
+  /* The step number written in the margin of an exercise book, underlined. */
+  .stage-number {
+    @apply font-display text-red-ink border-red-ink shrink-0 border-b-3 leading-none font-bold;
+    font-size: clamp(2.5rem, 1.6rem + 4vw, 4.5rem);
+  }
+
+  .panel {
+    @apply border-tableau border-l-ink bg-card p-line mt-para rounded-sm border border-l-6 shadow-sm;
+  }
+
+  .panel-head {
+    @apply gap-word mb-line flex flex-wrap items-baseline;
+  }
+
+  /* Second thoughts inside a panel — the appearance switches, the stored-list
+     note — sit under a dashed rule rather than in a panel of their own. */
+  .panel-aside {
+    @apply border-hairline mt-line pt-line border-t border-dashed;
+  }
+
+  .field-label {
+    @apply mb-hair block font-bold;
+  }
+
+  /* One dominant action per moment: a stamped block, not a web control. */
+  .cta {
+    @apply border-ink bg-ink text-card gap-word focus-visible:outline-margin-red text-lead flex w-full cursor-pointer items-center justify-center rounded-sm border-2 px-4 py-4 text-center font-bold transition-transform focus-visible:outline-2 focus-visible:outline-offset-2;
+    box-shadow:
+      3px 3px 0 var(--color-paper-shade),
+      3px 3px 0 1px var(--color-ink-soft);
+  }
+
+  .cta:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--color-ink) 88%, black);
+  }
+
+  .cta:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow:
+      1px 1px 0 var(--color-paper-shade),
+      1px 1px 0 1px var(--color-ink-soft);
+  }
+
+  /* Off, and still perfectly legible. The usual half-opacity takes the label
+     down with it, and the label is what says which button she is waiting on. */
+  .cta:disabled {
+    @apply bg-paper-shade text-ink border-ink-soft cursor-not-allowed border-dashed;
+    box-shadow: none;
+  }
+
+  /* Why the button above is off, at body size and in full ink — the most
+     useful sentence on the screen is never a small grey aside. */
+  .cta-reason {
+    @apply gap-word mt-line text-ink flex items-start;
+  }
+
+  /* The three settings that live in the print dialog, not in the page: getting
+     one of them wrong wastes a whole sheet of labels. */
+  .print-note {
+    @apply border-margin-red bg-paper-shade gap-word p-line text-ink flex items-start rounded-sm border-2 border-l-8;
+  }
+
+  /* --- Home --------------------------------------------------------------- */
+
+  /* The one real label on the home page: the element the sheet is made of, at
+     the width it will be printed, pinned to the page like a sample. */
+  .sample-label {
+    @apply -rotate-2;
+    width: var(--label-width);
+  }
+
+  /* The ruling has to stop competing with the reading: a veil of paper over it
+     leaves the texture perceptible under a long answer without lining it. */
+  .calm {
+    background-color: rgb(251 246 236 / 0.87);
+    @apply px-line py-line -mx-line rounded-sm;
+  }
+
+  /* A title, then a rule running to the end of the measure — the way a page of
+     a workbook opens a section. */
+  .section-rule {
+    @apply gap-word flex items-baseline;
+  }
+
+  .section-rule::after {
+    content: '';
+    @apply border-hairline flex-1 border-b;
+  }
+
+  /* These two links carried no underline and no affordance: nothing said they
+     were the way in. The tape and the tilt make them notes pinned to the page,
+     and the chevron row at the foot says they are clickable. */
+  .action-card {
+    @apply border-tableau border-l-ink bg-card p-line pt-para relative flex flex-col rounded-sm border border-l-6 no-underline shadow-sm transition-transform;
+    transform: rotate(-0.5deg);
+  }
+
+  .action-card:nth-child(even) {
+    transform: rotate(0.45deg);
+  }
+
+  .action-card::before {
+    content: '';
+    @apply bg-tape absolute left-1/2 h-6 w-22;
+    top: calc(-1 * var(--spacing-word));
+    transform: translateX(-50%) rotate(-2.5deg);
+    border-inline: 1px dashed rgb(120 100 55 / 0.35);
+  }
+
+  .action-card:hover,
+  .action-card:focus-visible {
+    transform: rotate(0deg) translateY(-3px);
+  }
+
+  .action-card-foot {
+    @apply border-hairline mt-word pt-word gap-word flex flex-wrap items-baseline justify-between border-t border-dashed;
+  }
+
+  /* --- Step 4: how far the work has got ----------------------------------- */
+
+  .meter-top {
+    @apply gap-word flex flex-wrap items-baseline justify-between;
+  }
+
+  .meter-count {
+    @apply font-display text-h2 font-bold;
+  }
+
+  /* Hatched rather than plain: the fill stays readable to someone who cannot
+     tell it from the trough by colour. */
+  .meter {
+    @apply border-ink-soft bg-paper-shade mt-line h-6 overflow-hidden rounded-sm border-2;
+  }
+
+  .meter-fill {
+    @apply bg-ink border-ink-soft h-full border-r-2;
+    width: 0;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgb(255 255 255 / 0.18) 0 6px,
+      transparent 6px 12px
+    );
+  }
+
+  .tallies {
+    @apply gap-y-word gap-x-para mt-line flex flex-wrap;
+  }
+
+  .tally {
+    @apply gap-hair inline-flex items-center font-bold;
+  }
+
+  /* A remark she must not walk past: a thick left rule, an icon and a word. */
+  .callout {
+    @apply gap-word p-line mt-line flex items-start rounded-sm border-2 border-l-8;
+  }
+
+  .callout-warn {
+    @apply border-amber-ink bg-amber-tint text-amber-ink;
+  }
+
+  .callout-ok {
+    @apply border-green-ink bg-green-tint text-green-ink;
   }
 
   /* --- Step 4 gallery ----------------------------------------------------- */
 
   .gallery {
-    @apply mt-4 grid gap-4;
+    @apply gap-line mt-line grid;
   }
 
   .gallery-small {
@@ -92,22 +416,45 @@
     grid-template-columns: repeat(auto-fill, minmax(23rem, 1fr));
   }
 
+  /* A photo pinned to the page, like the panels above: the left rule carries
+     the state, doubled every time by a badge with an icon and a word. */
   .photo-card {
-    @apply border-tableau flex flex-col overflow-hidden rounded-xl border bg-white;
+    @apply border-hairline border-l-ink-soft bg-card p-word relative flex flex-col gap-2 rounded-sm border border-l-6 shadow-sm;
   }
 
   .photo-card-image {
-    @apply flex aspect-4/3 w-full items-center justify-center bg-slate-100;
+    @apply border-hairline bg-paper-shade flex aspect-4/3 w-full items-center justify-center border;
   }
 
-  /* Photos that need an action: thick border and tinted background, always
-     paired with a badge carrying an icon and a word — never colour alone. */
-  .photo-card-warning {
-    @apply border-amber-600 bg-amber-50 ring-2 ring-amber-400;
+  /* The photos waiting on her: a red frame and a folded corner, so the state
+     reads from across the desk before any colour does. */
+  .photo-card-fix {
+    @apply border-red-ink bg-red-tint border-2 border-l-6;
   }
 
-  .photo-card-error {
-    @apply border-red-600 bg-red-50 ring-2 ring-red-300;
+  .photo-card-fix::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    border: 0.85rem solid var(--color-red-ink);
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+  }
+
+  /* Hatching: the "this one did not open at all" texture. Nothing to correct
+     here, so it is not the red of a thing to redo. */
+  .photo-card-unreadable {
+    @apply border-l-amber-ink;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-card) 0 10px,
+      var(--color-paper-shade) 10px 20px
+    );
+  }
+
+  .photo-card-copied {
+    @apply border-l-green-ink;
   }
 
   /* Only the thumbnail steps back. Fading the whole card took the resulting
@@ -124,7 +471,7 @@
   }
 
   .status-badge {
-    @apply text-caption inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold;
+    @apply text-micro gap-hair px-word inline-flex w-fit items-center rounded-sm border-2 py-0.5 font-bold tracking-wide uppercase;
   }
 
   /* Colour the labels will really be printed in, next to the one picked. */
@@ -212,7 +559,7 @@
 
 @keyframes card-moved {
   from {
-    box-shadow: 0 0 0 3px var(--color-blue-700);
+    box-shadow: 0 0 0 3px var(--color-margin-red);
   }
   to {
     box-shadow: 0 0 0 3px transparent;
@@ -222,6 +569,11 @@
 @media (prefers-reduced-motion: reduce) {
   .photo-card-moved {
     animation: none;
+  }
+
+  .action-card,
+  .cta {
+    transition: none;
   }
 }
 
@@ -235,9 +587,12 @@
   /* No padding of our own: the `@page` margin is the whole margin, and the
      screen's bottom padding alone was enough to spill a blank ninth page out
      of a sheet that ended exactly on the eighth. */
-  /* Points, not the screen scale: paper is measured in physical units. */
+  /* Points, not the screen scale: paper is measured in physical units. The
+     ruling is dropped explicitly — a background colour is not printed, a
+     background image is, and it would land under the labels. */
   body {
     @apply bg-white p-0 text-[12pt];
+    background-image: none;
   }
 
   .no-print {

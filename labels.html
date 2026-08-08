@@ -11,22 +11,59 @@
     <link rel="icon" href="favicon.svg" />
     <script type="module" src="/src/labels.ts"></script>
   </head>
-  <body class="px-4 pb-16">
-    <header class="no-print border-tableau mx-auto max-w-5xl border-b-2 pt-6 pb-4">
-      <p class="text-micro font-semibold tracking-widest text-slate-500 uppercase">Zou</p>
-      <h1 class="text-h1 mt-1 font-bold">Créer les étiquettes</h1>
-      <p class="mt-1 text-slate-500">Une étiquette = un QR code + le prénom écrit en dessous.</p>
-      <a class="mt-3 inline-block text-blue-700 hover:underline" href="index.html">← Retour à l'accueil</a>
+  <body class="px-line pb-page">
+    <header class="no-print pt-section mx-auto max-w-5xl">
+      <p class="eyebrow">Zou</p>
+      <h1 class="text-h1 mt-hair font-bold">Créer les étiquettes</h1>
+      <p class="text-lead mt-word text-ink-soft max-w-[46ch]">
+        Une étiquette = un QR code + le prénom écrit en dessous.
+      </p>
     </header>
 
-    <main class="mx-auto max-w-5xl">
-      <section class="step no-print mt-4">
-        <h2 class="text-h2 mb-3 font-semibold">Les prénoms</h2>
-        <p class="hint mb-2">
-          Un prénom par ligne. Ajoutez l'initiale du nom s'il y a deux fois le même prénom dans la classe (par exemple
-          <code class="rounded bg-slate-200 px-1">Léa B</code> et <code class="rounded bg-slate-200 px-1">Léa M</code>).
-        </p>
+    <div class="step-rail-bar no-print">
+      <nav aria-label="Progression de la création des étiquettes">
+        <ol class="step-rail" id="rail">
+          <li class="is-current" aria-current="step">
+            <span class="step-disc">1</span>
+            <span class="step-rail-text">
+              <span class="eyebrow">Étape 1 · en cours</span>
+              <span class="font-bold">Les prénoms</span>
+            </span>
+          </li>
+          <li>
+            <span class="step-disc">2</span>
+            <span class="step-rail-text">
+              <span class="eyebrow">Étape 2</span>
+              <span class="font-bold">L'allure</span>
+            </span>
+          </li>
+          <li>
+            <span class="step-disc">3</span>
+            <span class="step-rail-text">
+              <span class="eyebrow">Étape 3</span>
+              <span class="font-bold">Imprimer</span>
+            </span>
+          </li>
+        </ol>
+      </nav>
+      <a class="backlink" href="index.html">← Retour à l'accueil</a>
+    </div>
 
+    <main class="mx-auto max-w-4xl">
+      <div class="stage-head no-print">
+        <p class="stage-number" aria-hidden="true">1</p>
+        <div class="min-w-0">
+          <p class="eyebrow">Étape 1 sur 3</p>
+          <h2 class="text-h2 font-bold">Les prénoms</h2>
+          <p class="text-ink-soft mt-hair max-w-[46ch]">
+            Un prénom par ligne. Ajoutez l'initiale du nom s'il y a deux fois le même prénom dans la classe (par exemple
+            <code class="bg-paper-shade border-hairline rounded-sm border-b px-1">Léa B</code> et
+            <code class="bg-paper-shade border-hairline rounded-sm border-b px-1">Léa M</code>).
+          </p>
+        </div>
+      </div>
+
+      <section class="panel no-print" aria-label="La liste des prénoms">
         <label for="names" class="sr-only">Liste des prénoms</label>
         <textarea
           id="names"
@@ -35,63 +72,42 @@
           placeholder="Léa&#10;Noé&#10;Camille&#10;Youssef"
         ></textarea>
 
-        <p class="my-3">
-          <label for="copies">Nombre d'étiquettes par prénom :</label>
-          <input type="number" id="copies" value="8" min="1" max="60" class="field w-20" />
-        </p>
-
-        <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="generate" class="button">Générer les étiquettes</button>
-          <button type="button" id="print" class="button-secondary" disabled>Imprimer</button>
+        <div class="panel-aside">
+          <p>
+            <label class="field-label" for="copies">Nombre d'étiquettes par prénom</label>
+            <input type="number" id="copies" value="8" min="1" max="60" class="field w-20" />
+          </p>
+          <p class="hint mt-word">
+            Votre navigateur garde cette liste. Vous la retrouverez au moment de ranger les photos.
+          </p>
         </div>
-        <p class="hint mt-3" id="summary" role="status"></p>
-        <!-- Next to the button rather than in a paragraph below: these three settings
-             live in the print dialog, and getting one wrong wastes a whole sheet. -->
-        <p
-          class="border-tableau text-caption mt-3 flex items-start gap-3 rounded-xl border bg-slate-50 px-4 py-3 text-slate-700"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-            class="mt-0.5 size-5 shrink-0 text-slate-500"
-          >
-            <path d="M6 9V2h12v7"></path>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-            <path d="M6 14h12v8H6z"></path>
-          </svg>
-          <span>
-            Dans la fenêtre d'impression : papier <strong>A4</strong>, échelle <strong>100 %</strong>, et
-            <strong>en-têtes et pieds de page</strong> décochés — sinon l'adresse du site et la date se posent sur la
-            première rangée d'étiquettes.
-          </span>
-        </p>
-        <p class="hint mt-2">Votre navigateur garde cette liste. Vous la retrouverez au moment de ranger les photos.</p>
       </section>
 
-      <section class="step no-print">
-        <h2 class="text-h2 mb-1 font-semibold">L'allure des étiquettes</h2>
-        <p class="hint mb-3">
-          Chaque prénom garde sa couleur et son dessin : l'enfant retrouve son étiquette sans savoir lire.
-        </p>
+      <div class="stage-head no-print">
+        <p class="stage-number" aria-hidden="true">2</p>
+        <div class="min-w-0">
+          <p class="eyebrow">Étape 2 sur 3</p>
+          <h2 class="text-h2 font-bold">L'allure des étiquettes</h2>
+          <p class="text-ink-soft mt-hair max-w-[46ch]">
+            Chaque prénom garde sa couleur et son dessin : l'enfant retrouve son étiquette sans savoir lire.
+          </p>
+        </div>
+      </div>
 
-        <div class="grid gap-3 sm:grid-cols-3">
-          <p class="flex flex-col gap-1">
-            <label for="size">Taille</label>
-            <select id="size" class="field">
+      <section class="panel no-print" aria-label="L'allure des étiquettes">
+        <div class="gap-line grid sm:grid-cols-3">
+          <p>
+            <label class="field-label" for="size">Taille</label>
+            <select id="size" class="field w-full">
               <option value="small">Petites — 4 par ligne</option>
               <option value="medium">Moyennes — 3 par ligne</option>
               <option value="large">Grandes — 2 par ligne</option>
             </select>
           </p>
 
-          <p class="flex flex-col gap-1">
-            <label for="palette">Couleurs</label>
-            <select id="palette" class="field">
+          <p>
+            <label class="field-label" for="palette">Couleurs</label>
+            <select id="palette" class="field w-full">
               <option value="rainbow">Arc-en-ciel</option>
               <option value="ocean">Océan</option>
               <option value="candy">Bonbons</option>
@@ -100,9 +116,9 @@
             </select>
           </p>
 
-          <p class="flex flex-col gap-1">
-            <label for="mascots">Petits dessins</label>
-            <select id="mascots" class="field">
+          <p>
+            <label class="field-label" for="mascots">Petits dessins</label>
+            <select id="mascots" class="field w-full">
               <option value="animals">Animaux</option>
               <option value="nature">Nature</option>
               <option value="space">Espace</option>
@@ -111,7 +127,7 @@
           </p>
         </div>
 
-        <p class="mt-3 flex items-center gap-2" id="colour-row" hidden>
+        <p class="panel-aside gap-word flex flex-wrap items-center" id="colour-row" hidden>
           <label for="colour">Couleur de la classe :</label>
           <!-- The baseline dataset still lists the colour picker as limited because of
                its `alpha` and `colorspace` refinements; the plain field it is used as
@@ -126,14 +142,106 @@
         </p>
       </section>
 
+      <div class="mt-para no-print">
+        <button type="button" id="generate" class="cta">
+          Générer les étiquettes
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            class="size-6 shrink-0"
+          >
+            <path d="M4 12h15"></path>
+            <path d="m13 6 6 6-6 6"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="stage-head no-print">
+        <p class="stage-number" aria-hidden="true">3</p>
+        <div class="min-w-0">
+          <p class="eyebrow">Étape 3 sur 3</p>
+          <h2 class="text-h2 font-bold">Imprimer la planche</h2>
+        </div>
+      </div>
+
+      <section class="panel no-print" aria-label="Imprimer la planche">
+        <p class="print-note">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            class="text-red-ink mt-1 size-6 shrink-0"
+          >
+            <path d="M6 9V2h12v7"></path>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <path d="M6 14h12v8H6z"></path>
+          </svg>
+          <span>
+            Dans la fenêtre d'impression : papier <strong>A4</strong>, échelle <strong>100 %</strong>, et
+            <strong>en-têtes et pieds de page</strong> décochés — sinon l'adresse du site et la date se posent sur la
+            première rangée d'étiquettes.
+          </span>
+        </p>
+
+        <p class="mt-line">
+          <button type="button" id="print" class="cta" disabled aria-describedby="print-reason">
+            Imprimer la planche
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              class="size-6 shrink-0"
+            >
+              <path d="M6 9V2h12v7"></path>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <path d="M6 14h12v8H6z"></path>
+            </svg>
+          </button>
+        </p>
+        <p class="cta-reason" id="print-reason">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            class="text-red-ink mt-1 size-5 shrink-0"
+          >
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <path d="M12 9v4"></path>
+            <path d="M12 17h.01"></path>
+          </svg>
+          <span>Ce bouton s'allumera dès que la planche sera créée, avec le bouton juste au-dessus.</span>
+        </p>
+        <p class="hint mt-word" id="summary" role="status"></p>
+      </section>
+
+      <div class="section-rule mt-section mb-line no-print">
+        <h2 class="text-h2 font-bold">Aperçu de la planche</h2>
+      </div>
       <div class="label-sheet" id="sheet"></div>
     </main>
 
     <footer
-      class="no-print border-tableau text-caption mx-auto mt-10 flex max-w-5xl items-center gap-4 border-t pt-4 text-slate-500"
+      class="no-print border-tableau text-caption text-ink-soft gap-line mt-section pt-line mx-auto flex max-w-5xl items-center border-t-3 border-double"
     >
       <a
-        class="inline-flex items-center gap-2 text-slate-500 hover:text-blue-700 hover:underline"
+        class="gap-word text-ink-soft hover:text-red-ink inline-flex items-center hover:underline"
         href="%SOURCE_URL%"
         target="_blank"
         rel="noreferrer"
