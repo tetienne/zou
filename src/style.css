@@ -7,10 +7,17 @@
 @source '../*.html';
 @source './**/*.ts';
 
+/* The voice belongs to the stylesheet, not to a page: an entry point that
+   forgot to ask for it fell back to the system stack on the one page she opens
+   every week. Bundled rather than fetched from a CDN — a school machine is
+   often behind a proxy that blocks fonts.googleapis.com. Latin only, one
+   weight per role. `Caveat` is asked for by the home page alone, which is
+   where the handwritten line lives. */
+@import '@fontsource/fraunces/latin-700.css';
+@import '@fontsource/karla/latin-400.css';
+@import '@fontsource/karla/latin-700.css';
+
 @theme {
-  /* Self-hosted from `@fontsource-*` (see fonts.ts): a school machine often
-     sits behind a proxy that blocks fonts.googleapis.com, and the fallback
-     would be the system stack the voice was chosen to replace. */
   --font-sans: 'Karla', 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
   /* One job only: how often she does this. */
@@ -77,12 +84,20 @@
      pencil grey — 3.7:1 on the paper, 3.9:1 on a card. */
   --color-tableau: #7e7d96;
 
-  /* Decorative only, and never load-bearing: the Seyès ruling of the paper,
-     the separators inside a card, and the strip of tape on a taped card. */
-  --color-rule: #cddcee;
-  --color-rule-strong: #b0c8e2;
+  /* Decorative only, and never load-bearing: the separators inside a card, and
+     the strip of tape on a taped card. Both are asked for by name in the
+     pages, so they belong to the theme. */
   --color-hairline: #cbc3ae;
   --color-tape: #e2cd98;
+}
+
+/* The two inks of the ruling stay out of `@theme`: a colour declared there
+   also becomes `bg-…`, `text-…`, `border-…`, and these two sit near 1.6:1 on
+   the paper — an offer no page should be able to take up. The gradient below
+   is their only consumer. */
+:root {
+  --color-rule: #cddcee;
+  --color-rule-strong: #b0c8e2;
 }
 
 @layer base {

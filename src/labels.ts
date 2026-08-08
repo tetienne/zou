@@ -1,5 +1,4 @@
 // Printable sheet of QR labels: one QR per first name, repeated n times.
-import './fonts';
 import './style.css';
 import { qrCodeSvg } from './qr-generation';
 import {
