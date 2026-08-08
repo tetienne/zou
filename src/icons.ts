@@ -13,7 +13,7 @@ const ICON_PATHS = {
     '<path d="M12 9v4"/><path d="M12 17h.01"/>',
   forbidden: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
   copied: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-  pencil: '<path d="M12 4v10"/><path d="M12 19h.01"/>',
+  attention: '<path d="M12 4v10"/><path d="M12 19h.01"/>',
   waiting: '<circle cx="12" cy="12" r="4"/>',
 };
 

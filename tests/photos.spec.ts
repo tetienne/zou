@@ -133,6 +133,10 @@ test('files each photo under its own name, without overwriting', async ({ page }
   await page.goto('photos.html');
   await scan(page);
 
+  // The page holds no copy of its own for this step, so the branch that writes
+  // it for a browser with folder access is checked here.
+  await expect(page.locator('#destination-lead')).toContainText('Copier les photos');
+
   await page.getByRole('button', { name: 'Choisir le dossier de destination' }).click();
   await page.getByRole('button', { name: 'Copier les photos' }).click();
   await expect(page.getByText(/photos? copiées?\. Et zou/)).toBeVisible({ timeout: 60_000 });
@@ -182,6 +186,47 @@ test('rebuilds the gallery on a second scan', async ({ page }) => {
     (images) => images.filter((image) => (image as HTMLImageElement).naturalWidth > 0).length,
   );
   expect(showing).toBeGreaterThan(0);
+});
+
+// Firefox and Safari have no `showDirectoryPicker`, so the page downloads the
+// photos one by one instead of writing them into a chosen folder. Nothing on
+// screen may then name a button, a folder or a step this browser does not have,
+// and no test reaches that path any other way.
+test('tells the truth in a browser that cannot write into a folder', async ({ page }) => {
+  await page.addInitScript(() => {
+    delete (window as unknown as { showDirectoryPicker?: unknown }).showDirectoryPicker;
+  });
+  await page.goto('photos.html');
+
+  await expect(page.locator('#copy-label')).toHaveText('Télécharger les photos renommées');
+
+  const lead = page.locator('#destination-lead');
+  await expect(lead).toContainText('Télécharger les photos renommées');
+  await expect(lead).not.toContainText('Copier les photos');
+  await expect(lead).not.toContainText('Choisissez le dossier');
+
+  const hint = page.locator('#subfolders-hint');
+  await expect(hint).toContainText('Impossible ici');
+  await expect(hint).not.toContainText('Léa');
+
+  // Three steps, numbered as such from the trail down to the heads: the
+  // destination is imposed here, so it is not a step she can be in.
+  await expect(page.locator('#rail li')).toHaveCount(3);
+  await expect(page.locator('#rail .step-disc')).toHaveText(['1', '2', '3']);
+  await expect(page.locator('#rail .eyebrow')).toHaveText([
+    'Étape 1 · en cours',
+    'Étape 2',
+    'Étape 3',
+  ]);
+  await expect(page.locator('#rail')).not.toContainText('faite');
+  await expect(page.locator('#rail-caption')).toHaveText('Étape 1 sur 3');
+
+  await expect(page.locator('#stage-photos .eyebrow')).toHaveText('Étape 1 sur 3');
+  await expect(page.locator('#stage-destination .eyebrow')).toHaveText('Réglages');
+  await expect(page.locator('#stage-destination .stage-number')).toBeHidden();
+  await expect(page.locator('#stage-scan .eyebrow')).toHaveText('Étape 2 sur 3');
+  await expect(page.locator('#stage-scan .stage-number')).toHaveText('2');
+  await expect(page.locator('#stage-check .eyebrow')).toHaveText('Étape 3 sur 3');
 });
 
 // The panel is unhidden before the first photo of the new folder is read, so a

@@ -146,21 +146,15 @@
 @layer components {
   /* The focus ring is the red pencil, everywhere, and it is offset so it always
      lands on the paper (4.4:1) rather than on the control it circles. */
-  .button,
   .button-secondary {
-    @apply focus-visible:outline-margin-red px-line py-word cursor-pointer rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-45;
+    @apply focus-visible:outline-margin-red border-ink-soft bg-card text-ink hover:bg-paper-shade px-line py-word cursor-pointer rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed;
   }
 
-  .button {
-    @apply border-ink bg-ink text-card;
-  }
-
-  .button:hover:not(:disabled) {
-    background-color: color-mix(in oklab, var(--color-ink) 88%, black);
-  }
-
-  .button-secondary {
-    @apply border-ink-soft bg-card text-ink hover:bg-paper-shade disabled:hover:bg-card;
+  /* Off, and still legible, for the reason `.cta:disabled` gives: half-opacity
+     takes the label down with it. This is where the one permanently disabled
+     button lives — the destination, in a browser that cannot write to a folder. */
+  .button-secondary:disabled {
+    @apply bg-paper-shade text-ink border-ink-soft border-dashed;
   }
 
   /* `slate-400` gave the border 2.63:1 on white, under the 3:1 WCAG asks of a
@@ -280,10 +274,6 @@
 
   .panel {
     @apply border-tableau border-l-ink bg-card p-line mt-para rounded-sm border border-l-6 shadow-sm;
-  }
-
-  .panel-head {
-    @apply gap-word mb-line flex flex-wrap items-baseline;
   }
 
   /* Second thoughts inside a panel — the appearance switches, the stored-list
@@ -523,8 +513,7 @@
     border-left-color: transparent;
   }
 
-  /* Hatching: the "this one did not open at all" texture. Nothing to correct
-     here, so it is not the red of a thing to redo. */
+  /* Hatching: the "this one did not open at all" texture. */
   .photo-card-unreadable {
     @apply border-l-amber-ink;
     background: repeating-linear-gradient(

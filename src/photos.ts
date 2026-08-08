@@ -78,7 +78,12 @@ let scanDone = false;
 const el = {
   warning: required('warning', HTMLDivElement),
   rail: required('rail', HTMLOListElement),
+  railDestination: required('rail-destination', HTMLLIElement),
   railCaption: required('rail-caption', HTMLParagraphElement),
+  stagePhotos: required('stage-photos', HTMLDivElement),
+  stageDestination: required('stage-destination', HTMLDivElement),
+  stageScan: required('stage-scan', HTMLDivElement),
+  stageCheck: required('stage-check', HTMLDivElement),
   chooseSource: required('choose-source', HTMLButtonElement),
   sourceName: required('source-name', HTMLSpanElement),
   sourceRecall: required('source-recall', HTMLParagraphElement),
@@ -89,8 +94,10 @@ const el = {
   destinationRecall: required('destination-recall', HTMLParagraphElement),
   destinationRecallName: required('destination-recall-name', HTMLSpanElement),
   destinationResume: required('destination-resume', HTMLButtonElement),
+  destinationLead: required('destination-lead', HTMLParagraphElement),
   fallbackSource: required('fallback-source', HTMLInputElement),
   subfolders: required('subfolders', HTMLInputElement),
+  subfoldersHint: required('subfolders-hint', HTMLSpanElement),
   pattern: required('pattern', HTMLSelectElement),
   scan: required('scan', HTMLButtonElement),
   scanBlocked: required('scan-blocked', HTMLParagraphElement),
@@ -126,22 +133,25 @@ let destinationLabel = '';
 
 const chosenPattern = (): NamePattern => el.pattern.value as NamePattern;
 
-// --- The trail of the four steps --------------------------------------------
+// --- The trail of the steps -------------------------------------------------
 
+// Where the browser cannot write into a folder there is nothing to choose at
+// the second step, so the trail drops it: shown as « faite », a step she never
+// took reads as a display bug.
+if (!supportsDirectories) el.railDestination.remove();
 const railSteps = [...el.rail.querySelectorAll('li')];
 
 /**
- * Where she is in the four moments of the page: a folder opened, a destination
+ * Where she is in the moments of the page: a folder opened, a destination
  * chosen, the codes read, the copy made.
  */
 function refreshRail(): void {
-  const done = [
-    files.length > 0,
-    !supportsDirectories || destination !== null,
-    scanDone,
-    rows.some((row) => row.copied) && !rows.some((row) => firstNameOf(row) && !row.copied),
-  ];
-  // The step she is in is the first one left to do; 0 once the four are done.
+  const filed =
+    rows.some((row) => row.copied) && !rows.some((row) => firstNameOf(row) && !row.copied);
+  const done = supportsDirectories
+    ? [files.length > 0, destination !== null, scanDone, filed]
+    : [files.length > 0, scanDone, filed];
+  // The step she is in is the first one left to do; 0 once they are all done.
   const current = done.indexOf(false) + 1;
   showRail(railSteps, done, current);
 
@@ -150,6 +160,22 @@ function refreshRail(): void {
     current === 0
       ? `Les ${String(total)} étapes sont faites`
       : `Étape ${String(current)} sur ${String(total)}`;
+}
+
+/** Rewrites the number in the margin and the kicker above a step's title. */
+function numberStage(head: HTMLElement, number: number, total: number): void {
+  const margin = head.querySelector('.stage-number');
+  if (margin) margin.textContent = String(number);
+  const kicker = head.querySelector('.eyebrow');
+  if (kicker) kicker.textContent = `Étape ${String(number)} sur ${String(total)}`;
+}
+
+/** A head that no longer numbers a step, though its panel still holds settings. */
+function unnumberStage(head: HTMLElement, kicker: string): void {
+  const margin = head.querySelector<HTMLElement>('.stage-number');
+  if (margin) margin.hidden = true;
+  const eyebrow = head.querySelector('.eyebrow');
+  if (eyebrow) eyebrow.textContent = kicker;
 }
 
 /** A bar drawn by hand rather than a `<progress>`, to match the rest. */
@@ -224,6 +250,25 @@ if (!supportsDirectories) {
   el.subfolders.checked = false;
   el.subfolders.disabled = true;
   el.copyLabel.textContent = 'Télécharger les photos renommées';
+  // Every sentence of this step names a button, a folder or a step number that
+  // this browser does not have. They are written here rather than in the page
+  // so that the two versions cannot drift apart.
+  el.destinationLead.textContent =
+    'Ce navigateur ne sait pas écrire dans un dossier : les photos renommées arriveront une ' +
+    'par une dans vos téléchargements, quand vous cliquerez sur « Télécharger les photos ' +
+    'renommées ».';
+  el.subfoldersHint.textContent =
+    'Impossible ici : ce navigateur ne peut que télécharger les photos, une par une. Le prénom ' +
+    'reste dans le nom du fichier.';
+  const steps = railSteps.length;
+  numberStage(el.stagePhotos, 1, steps);
+  unnumberStage(el.stageDestination, 'Réglages');
+  numberStage(el.stageScan, 2, steps);
+  numberStage(el.stageCheck, 3, steps);
+} else {
+  el.destinationLead.textContent =
+    'Choisissez le dossier d’arrivée. Rien n’y est écrit avant que vous ne cliquiez sur ' +
+    '« Copier les photos ».';
 }
 
 refreshRail();
@@ -583,7 +628,7 @@ function rowState(row: Row): RowState {
     }
     return {
       label: 'QR non trouvé',
-      icon: 'pencil',
+      icon: 'attention',
       badge: 'border-red-ink text-red-ink bg-red-tint',
       card: 'photo-card-fix',
     };
@@ -666,7 +711,7 @@ function refreshSummary(): void {
   el.tallies.textContent = '';
   const tallies: { count: number; word: string; icon: IconName; tone: string }[] = [
     { count: copied, word: `rangée${plural(copied)}`, icon: 'copied', tone: 'text-green-ink' },
-    { count: withoutName, word: 'à corriger', icon: 'pencil', tone: 'text-red-ink' },
+    { count: withoutName, word: 'à corriger', icon: 'attention', tone: 'text-red-ink' },
     {
       count: unreadable,
       word: `illisible${plural(unreadable)}`,

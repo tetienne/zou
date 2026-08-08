@@ -35,7 +35,7 @@ const sheet = required('sheet', HTMLDivElement);
 const summary = required('summary', HTMLParagraphElement);
 const printButton = required('print', HTMLButtonElement);
 const printReason = required('print-reason', HTMLParagraphElement);
-const railSteps = [...required('rail', HTMLOListElement).children];
+const railSteps = [...required('rail', HTMLOListElement).querySelectorAll('li')];
 
 /** Names of the last generated sheet, so a style change redraws it at once. */
 let printedNames: string[] = [];
