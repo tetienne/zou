@@ -129,7 +129,7 @@ const OG_IMAGE = {
   file: 'og.png',
   width: '1200',
   height: '630',
-  alt: "Le carré bleu de Zou, à côté de la phrase « Ranger les photos des travaux d'élèves ».",
+  alt: "Une feuille de cahier avec le tampon « Zou », la phrase « Ranger les photos des travaux d'élèves » et une étiquette QR au prénom Léa.",
 };
 
 const firstMatch = (html: string, pattern: RegExp, what: string, page: string): string => {
@@ -257,6 +257,6 @@ export default defineConfig({
   worker: { format: 'es', plugins: () => [legalNotice()] },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
   },
 });
