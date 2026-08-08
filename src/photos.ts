@@ -642,7 +642,7 @@ function rowState(row: Row): RowState {
     };
   }
   return {
-    label: 'En attente',
+    label: 'À ranger',
     icon: 'waiting',
     badge: 'border-ink-soft text-ink bg-paper-shade',
     card: '',
@@ -718,7 +718,7 @@ function refreshSummary(): void {
       icon: 'forbidden',
       tone: 'text-amber-ink',
     },
-    { count: waiting, word: 'en attente', icon: 'waiting', tone: 'text-ink-soft' },
+    { count: waiting, word: 'à ranger', icon: 'waiting', tone: 'text-ink-soft' },
   ];
   for (const tally of tallies) {
     const item = document.createElement('li');
