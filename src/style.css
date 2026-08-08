@@ -119,6 +119,11 @@
     text-wrap: balance;
   }
 
+  /* Something typed at a keyboard, set the way the pages set a folder path. */
+  code {
+    @apply bg-paper-shade border-hairline px-hair rounded-sm border-b;
+  }
+
   /* The `hidden` attribute must always win: without this rule a display
      utility (`flex`, `grid`…) would keep the element visible. */
   [hidden] {
@@ -131,7 +136,7 @@
      lands on the paper (4.4:1) rather than on the control it circles. */
   .button,
   .button-secondary {
-    @apply focus-visible:outline-margin-red cursor-pointer rounded-lg border px-4 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-45;
+    @apply focus-visible:outline-margin-red px-line py-word cursor-pointer rounded-lg border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-45;
   }
 
   .button {
@@ -149,11 +154,21 @@
   /* `slate-400` gave the border 2.63:1 on white, under the 3:1 WCAG asks of a
      control's own outline. */
   .field {
-    @apply border-ink-soft bg-card focus-visible:outline-margin-red rounded-md border px-2 py-1 focus-visible:outline-2 focus-visible:outline-offset-1;
+    @apply border-ink-soft bg-card focus-visible:outline-margin-red px-word py-hair rounded-md border focus-visible:outline-2 focus-visible:outline-offset-1;
   }
 
   .hint {
     @apply text-caption text-ink-soft;
+  }
+
+  /* One measure for prose, at the two sizes the pages use it: under a page
+     title, and under the title of a step inside that page. */
+  .page-lead {
+    @apply text-lead mt-word text-ink-soft max-w-[46ch];
+  }
+
+  .stage-lead {
+    @apply text-ink-soft mt-hair max-w-[46ch];
   }
 
   /* A folder, written the way the file explorer writes it — and, while none is
@@ -174,6 +189,14 @@
 
   .backlink {
     @apply gap-hair text-ink-soft hover:text-red-ink inline-flex items-center font-bold;
+  }
+
+  .page-foot {
+    @apply border-tableau text-caption text-ink-soft gap-line mt-section pt-line mx-auto flex max-w-5xl items-center border-t-3 border-double;
+  }
+
+  .page-foot a {
+    @apply gap-word text-ink-soft hover:text-red-ink inline-flex items-center hover:underline;
   }
 
   /* --- The step trail ----------------------------------------------------- */
@@ -259,7 +282,7 @@
 
   /* One dominant action per moment: a stamped block, not a web control. */
   .cta {
-    @apply border-ink bg-ink text-card gap-word focus-visible:outline-margin-red text-lead flex w-full cursor-pointer items-center justify-center rounded-sm border-2 px-4 py-4 text-center font-bold transition-transform focus-visible:outline-2 focus-visible:outline-offset-2;
+    @apply border-ink bg-ink text-card gap-word focus-visible:outline-margin-red text-lead p-line flex w-full cursor-pointer items-center justify-center rounded-sm border-2 text-center font-bold transition-transform focus-visible:outline-2 focus-visible:outline-offset-2;
     box-shadow:
       3px 3px 0 var(--color-paper-shade),
       3px 3px 0 1px var(--color-ink-soft);
@@ -289,10 +312,14 @@
     @apply gap-word mt-line text-ink flex items-start;
   }
 
-  /* The three settings that live in the print dialog, not in the page: getting
-     one of them wrong wastes a whole sheet of labels. */
-  .print-note {
-    @apply border-margin-red bg-paper-shade gap-word p-line text-ink flex items-start rounded-sm border-2 border-l-8;
+  /* The icon sits on the first line of the sentence, not on its middle. */
+  .cta-reason > svg {
+    @apply text-red-ink mt-hair size-5 shrink-0;
+  }
+
+  /* A folder to pick, and the folder once picked, on one line. */
+  .chooser-row {
+    @apply gap-line flex flex-wrap items-center;
   }
 
   /* --- Home --------------------------------------------------------------- */
@@ -308,7 +335,12 @@
      leaves the texture perceptible under a long answer without lining it. */
   .calm {
     background-color: rgb(251 246 236 / 0.87);
-    @apply px-line py-line -mx-line rounded-sm;
+    @apply p-line -mx-line rounded-sm;
+  }
+
+  /* One answer, held down by a rule along its top edge. */
+  .faq-card {
+    @apply border-tableau border-t-ink-soft bg-card p-line rounded-sm border border-t-3;
   }
 
   /* A title, then a rule running to the end of the measure — the way a page of
@@ -345,6 +377,11 @@
   .action-card:hover,
   .action-card:focus-visible {
     transform: rotate(0deg) translateY(-3px);
+  }
+
+  /* Which of the two it is, in the hand that numbers an exercise. */
+  .action-card-number {
+    @apply text-red-ink border-red-ink font-display grid size-9 -rotate-6 place-items-center rounded-full border-2 font-bold;
   }
 
   .action-card-foot {
@@ -385,9 +422,16 @@
     @apply gap-hair inline-flex items-center font-bold;
   }
 
-  /* A remark she must not walk past: a thick left rule, an icon and a word. */
+  /* --- Callouts ----------------------------------------------------------- */
+
+  /* A remark she must not walk past: a thick left rule, an icon and a word.
+     The tone is never the colour alone — every use pairs it with both. */
   .callout {
-    @apply gap-word p-line mt-line flex items-start rounded-sm border-2 border-l-8;
+    @apply gap-word p-line flex items-start rounded-sm border-2 border-l-8;
+  }
+
+  .callout > svg {
+    @apply mt-hair size-6 shrink-0;
   }
 
   .callout-warn {
@@ -398,7 +442,23 @@
     @apply border-green-ink bg-green-tint text-green-ink;
   }
 
+  /* The three settings that live in the print dialog, not in the page: getting
+     one of them wrong wastes a whole sheet of labels. */
+  .callout-print {
+    @apply border-margin-red bg-paper-shade text-ink;
+  }
+
+  .callout-print > svg {
+    @apply text-red-ink;
+  }
+
   /* --- Step 4 gallery ----------------------------------------------------- */
+
+  /* One of three sizes, as a row of stamps: the radio itself is off screen, so
+     the label is both the target and the state. */
+  .pill {
+    @apply text-caption peer-focus-visible:outline-margin-red peer-checked:bg-ink peer-checked:text-card hover:bg-paper-shade px-line py-hair block cursor-pointer font-bold peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2;
+  }
 
   .gallery {
     @apply gap-line mt-line grid;
@@ -418,8 +478,10 @@
 
   /* A photo pinned to the page, like the panels above: the left rule carries
      the state, doubled every time by a badge with an icon and a word. */
+  /* Not `--color-hairline`: it is decorative at 1.6:1, and a card's own
+     outline has to clear 3:1 — `bg-card` alone barely lifts off the paper. */
   .photo-card {
-    @apply border-hairline border-l-ink-soft bg-card p-word relative flex flex-col gap-2 rounded-sm border border-l-6 shadow-sm;
+    @apply border-tableau border-l-ink-soft bg-card p-word gap-word relative flex flex-col rounded-sm border border-l-6 shadow-sm;
   }
 
   .photo-card-image {

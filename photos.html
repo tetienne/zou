@@ -15,7 +15,7 @@
     <header class="pt-section mx-auto max-w-5xl">
       <p class="eyebrow">Zou</p>
       <h1 class="text-h1 mt-hair font-bold">Ranger les photos</h1>
-      <p class="text-lead mt-word text-ink-soft max-w-[46ch]">
+      <p class="page-lead">
         Vos photos d'origine ne bougent pas : Zou en fait une copie renommée avec le prénom de l'enfant.
       </p>
     </header>
@@ -67,19 +67,19 @@
         <div class="min-w-0">
           <p class="eyebrow">Étape 1 sur 4</p>
           <h2 class="text-h2 font-bold">Les photos à ranger</h2>
-          <p class="text-ink-soft mt-hair max-w-[46ch]">
+          <p class="stage-lead">
             Branchez d'abord l'appareil photo ou le téléphone : ses photos apparaissent comme un dossier.
           </p>
         </div>
       </div>
 
       <section class="panel" aria-label="Le dossier des photos">
-        <div class="gap-line flex flex-wrap items-center">
+        <div class="chooser-row">
           <button type="button" id="choose-source" class="button-secondary">Choisir le dossier des photos</button>
           <span class="path" id="source-name" data-empty>Aucun dossier choisi pour l'instant</span>
         </div>
         <!-- Offered, not restored: the browser only renews folder access from a click. -->
-        <p class="panel-aside gap-line flex flex-wrap items-center" id="source-recall" hidden>
+        <p class="panel-aside chooser-row" id="source-recall" hidden>
           <button type="button" id="source-resume" class="button-secondary">
             Reprendre <span id="source-recall-name" class="font-mono"></span>
           </button>
@@ -92,20 +92,20 @@
         <div class="min-w-0">
           <p class="eyebrow">Étape 2 sur 4</p>
           <h2 class="text-h2 font-bold">Où les ranger</h2>
-          <p class="text-ink-soft mt-hair max-w-[46ch]">
+          <p class="stage-lead">
             Choisissez le dossier d'arrivée. Rien n'y est écrit avant que vous ne cliquiez sur « Copier les photos ».
           </p>
         </div>
       </div>
 
       <section class="panel" aria-label="Le dossier de destination">
-        <div class="gap-line flex flex-wrap items-center">
+        <div class="chooser-row">
           <button type="button" id="choose-destination" class="button-secondary">
             Choisir le dossier de destination
           </button>
           <span class="path" id="destination-name" data-empty>Aucun dossier choisi pour l'instant</span>
         </div>
-        <p class="panel-aside gap-line flex flex-wrap items-center" id="destination-recall" hidden>
+        <p class="panel-aside chooser-row" id="destination-recall" hidden>
           <button type="button" id="destination-resume" class="button-secondary">
             Reprendre <span id="destination-recall-name" class="font-mono"></span>
           </button>
@@ -138,7 +138,7 @@
         <div class="min-w-0">
           <p class="eyebrow">Étape 3 sur 4</p>
           <h2 class="text-h2 font-bold">Lire les QR codes</h2>
-          <p class="text-ink-soft mt-hair max-w-[46ch]">
+          <p class="stage-lead">
             Zou ouvre chaque photo et cherche l'étiquette. Les photos ne sont ni modifiées ni déplacées.
           </p>
         </div>
@@ -202,7 +202,7 @@
           <div class="min-w-0">
             <p class="eyebrow">Étape 4 sur 4</p>
             <h2 class="text-h2 font-bold">Vérifier et copier</h2>
-            <p class="text-ink-soft mt-hair max-w-[46ch]">
+            <p class="stage-lead">
               Un prénom manque ? Écrivez-le dans la carte : la photo rejoint aussitôt les autres.
             </p>
           </div>
