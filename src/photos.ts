@@ -15,6 +15,8 @@ import {
 } from './names';
 import { findFreeFileName, planFileNames, type PhotoEntry } from './filing';
 import { required } from './dom';
+import { icon, type IconName } from './icons';
+import { showRail } from './step-rail';
 import { directoryPicker as folderPicker, supportsFolders, type Directory } from './folder-access';
 import { forgetFolder, grantAccess, recallFolder, rememberFolder } from './folder-memory';
 
@@ -75,6 +77,13 @@ let scanDone = false;
 
 const el = {
   warning: required('warning', HTMLDivElement),
+  rail: required('rail', HTMLOListElement),
+  railDestination: required('rail-destination', HTMLLIElement),
+  railCaption: required('rail-caption', HTMLParagraphElement),
+  stagePhotos: required('stage-photos', HTMLDivElement),
+  stageDestination: required('stage-destination', HTMLDivElement),
+  stageScan: required('stage-scan', HTMLDivElement),
+  stageCheck: required('stage-check', HTMLDivElement),
   chooseSource: required('choose-source', HTMLButtonElement),
   sourceName: required('source-name', HTMLSpanElement),
   sourceRecall: required('source-recall', HTMLParagraphElement),
@@ -85,52 +94,95 @@ const el = {
   destinationRecall: required('destination-recall', HTMLParagraphElement),
   destinationRecallName: required('destination-recall-name', HTMLSpanElement),
   destinationResume: required('destination-resume', HTMLButtonElement),
+  destinationLead: required('destination-lead', HTMLParagraphElement),
   fallbackSource: required('fallback-source', HTMLInputElement),
   subfolders: required('subfolders', HTMLInputElement),
+  subfoldersHint: required('subfolders-hint', HTMLSpanElement),
   pattern: required('pattern', HTMLSelectElement),
   scan: required('scan', HTMLButtonElement),
   scanBlocked: required('scan-blocked', HTMLParagraphElement),
-  scanProgress: required('scan-progress', HTMLProgressElement),
+  scanBlockedText: required('scan-blocked-text', HTMLSpanElement),
+  scanMeter: required('scan-meter', HTMLDivElement),
+  scanMeterFill: required('scan-meter-fill', HTMLDivElement),
   scanStatus: required('scan-status', HTMLParagraphElement),
   resultsBlock: required('results-block', HTMLElement),
   results: required('results', HTMLDivElement),
+  progressCount: required('progress-count', HTMLParagraphElement),
+  progressNote: required('progress-note', HTMLParagraphElement),
+  copyMeter: required('copy-meter', HTMLDivElement),
+  copyMeterFill: required('copy-meter-fill', HTMLDivElement),
+  tallies: required('tallies', HTMLUListElement),
   needsAttention: required('needs-attention', HTMLDivElement),
-  needsAttentionText: required('needs-attention-text', HTMLSpanElement),
-  heicNote: required('heic-note', HTMLParagraphElement),
+  needsAttentionText: required('needs-attention-text', HTMLElement),
+  heicNote: required('heic-note', HTMLSpanElement),
   allReady: required('all-ready', HTMLParagraphElement),
-  summary: required('summary', HTMLParagraphElement),
   knownNames: required('known-names', HTMLDataListElement),
   copy: required('copy', HTMLButtonElement),
-  copyStatus: required('copy-status', HTMLSpanElement),
   copyBlocked: required('copy-blocked', HTMLParagraphElement),
-  copyProgress: required('copy-progress', HTMLProgressElement),
+  copyBlockedText: required('copy-blocked-text', HTMLSpanElement),
+  copyTarget: required('copy-target', HTMLParagraphElement),
+  copyDone: required('copy-done', HTMLParagraphElement),
+  copyDoneText: required('copy-done-text', HTMLSpanElement),
+  copyLabel: required('copy-label', HTMLSpanElement),
+  copyStatus: required('copy-status', HTMLElement),
+  copyOutcome: required('copy-outcome', HTMLSpanElement),
 };
+
+/** Named in every sentence about the copy, so she never has to guess where. */
+let destinationLabel = '';
 
 const chosenPattern = (): NamePattern => el.pattern.value as NamePattern;
 
-// --- Small icons (never colour alone) ---------------------------------------
+// --- The trail of the steps -------------------------------------------------
 
-const ICON_PATHS: Record<string, string> = {
-  ready: '<path d="m20 6-11 11-5-5"/>',
-  warning:
-    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>' +
-    '<path d="M12 9v4"/><path d="M12 17h.01"/>',
-  forbidden: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
-  copied: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-};
+// Where the browser cannot write into a folder there is nothing to choose at
+// the second step, so the trail drops it: shown as « faite », a step she never
+// took reads as a display bug.
+if (!supportsDirectories) el.railDestination.remove();
+const railSteps = [...el.rail.querySelectorAll('li')];
 
-function icon(name: string, className: string): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('class', className);
-  svg.innerHTML = ICON_PATHS[name] ?? '';
-  return svg;
+/**
+ * Where she is in the moments of the page: a folder opened, a destination
+ * chosen, the codes read, the copy made.
+ */
+function refreshRail(): void {
+  const filed =
+    rows.some((row) => row.copied) && !rows.some((row) => firstNameOf(row) && !row.copied);
+  const done = supportsDirectories
+    ? [files.length > 0, destination !== null, scanDone, filed]
+    : [files.length > 0, scanDone, filed];
+  // The step she is in is the first one left to do; 0 once they are all done.
+  const current = done.indexOf(false) + 1;
+  showRail(railSteps, done, current);
+
+  const total = railSteps.length;
+  el.railCaption.textContent =
+    current === 0
+      ? `Les ${String(total)} étapes sont faites`
+      : `Étape ${String(current)} sur ${String(total)}`;
+}
+
+/** Rewrites the number in the margin and the kicker above a step's title. */
+function numberStage(head: HTMLElement, number: number, total: number): void {
+  const margin = head.querySelector('.stage-number');
+  if (margin) margin.textContent = String(number);
+  const kicker = head.querySelector('.eyebrow');
+  if (kicker) kicker.textContent = `Étape ${String(number)} sur ${String(total)}`;
+}
+
+/** A head that no longer numbers a step, though its panel still holds settings. */
+function unnumberStage(head: HTMLElement, kicker: string): void {
+  const margin = head.querySelector<HTMLElement>('.stage-number');
+  if (margin) margin.hidden = true;
+  const eyebrow = head.querySelector('.eyebrow');
+  if (eyebrow) eyebrow.textContent = kicker;
+}
+
+/** A bar drawn by hand rather than a `<progress>`, to match the rest. */
+function setMeter(meter: HTMLElement, fill: HTMLElement, value: number, max: number): void {
+  fill.style.width = max > 0 ? `${String(Math.round((value / max) * 100))}%` : '0';
+  meter.setAttribute('aria-valuemax', String(max));
+  meter.setAttribute('aria-valuenow', String(value));
 }
 
 // --- Thumbnail size (remembered from one week to the next) -------------------
@@ -192,11 +244,34 @@ if (!supportsDirectories) {
       'prénom. Sur un ordinateur, vous pouvez utiliser Microsoft Edge ou Google Chrome, par exemple.',
   );
   el.chooseDestination.disabled = true;
-  el.destinationName.textContent = 'dossier « Téléchargements »';
+  el.destinationName.textContent = 'Dossier « Téléchargements »';
+  el.destinationName.removeAttribute('data-empty');
+  destinationLabel = 'le dossier « Téléchargements »';
   el.subfolders.checked = false;
   el.subfolders.disabled = true;
-  el.copy.textContent = 'Télécharger les photos renommées';
+  el.copyLabel.textContent = 'Télécharger les photos renommées';
+  // Every sentence of this step names a button, a folder or a step number that
+  // this browser does not have. They are written here rather than in the page
+  // so that the two versions cannot drift apart.
+  el.destinationLead.textContent =
+    'Ce navigateur ne sait pas écrire dans un dossier : les photos renommées arriveront une ' +
+    'par une dans vos téléchargements, quand vous cliquerez sur « Télécharger les photos ' +
+    'renommées ».';
+  el.subfoldersHint.textContent =
+    'Impossible ici : ce navigateur ne peut que télécharger les photos, une par une. Le prénom ' +
+    'reste dans le nom du fichier.';
+  const steps = railSteps.length;
+  numberStage(el.stagePhotos, 1, steps);
+  unnumberStage(el.stageDestination, 'Réglages');
+  numberStage(el.stageScan, 2, steps);
+  numberStage(el.stageCheck, 3, steps);
+} else {
+  el.destinationLead.textContent =
+    'Choisissez le dossier d’arrivée. Rien n’y est écrit avant que vous ne cliquiez sur ' +
+    '« Copier les photos ».';
 }
+
+refreshRail();
 
 el.chooseSource.addEventListener('click', () => void chooseSource());
 el.chooseDestination.addEventListener('click', () => void chooseDestination());
@@ -264,6 +339,8 @@ async function chooseDestination(): Promise<void> {
 function useDestination(directory: Directory): void {
   destination = directory;
   el.destinationName.textContent = directory.name;
+  el.destinationName.removeAttribute('data-empty');
+  destinationLabel = `le dossier « ${directory.name} »`;
   el.chooseDestination.textContent = 'Changer de dossier de destination';
   refreshCopyButton();
 }
@@ -296,7 +373,7 @@ async function offerRememberedFolders(): Promise<void> {
 async function resumeSource(folder: Directory): Promise<void> {
   if (!(await grantAccess(folder, 'read'))) {
     await dropRemembered('source', el.sourceRecall);
-    el.scanBlocked.textContent =
+    el.scanBlockedText.textContent =
       'Ce dossier n’est plus accessible. Choisissez-le à nouveau ci-dessus.';
     el.scanBlocked.hidden = false;
     return;
@@ -326,14 +403,22 @@ function loadFiles(found: { file: File; originalName: string }[], directoryName:
   el.resultsBlock.hidden = true;
   el.needsAttention.hidden = true;
   el.allReady.hidden = true;
-  el.summary.textContent = '';
+  el.copyDone.hidden = true;
   el.sourceName.textContent = `${directoryName} — ${found.length} photo${plural(found.length)}`;
+  el.sourceName.removeAttribute('data-empty');
   el.chooseSource.textContent = 'Changer de dossier';
   el.scan.disabled = found.length === 0;
   el.scanStatus.textContent = '';
-  el.scanBlocked.textContent =
-    found.length === 0 ? 'Ce dossier ne contient aucune image. Choisissez-en un autre.' : '';
+  el.scanBlockedText.textContent =
+    found.length === 0
+      ? 'Ce dossier ne contient aucune image. Choisissez-en un autre.'
+      : 'Ce bouton s’allumera dès que vous aurez choisi le dossier des photos, à l’étape 1.';
   el.scanBlocked.hidden = found.length > 0;
+  // `scanPhotos` unhides the progress panel before the first photo is read, so
+  // without this the tallies of the previous folder stay on screen for the
+  // whole scan — numbers that are wrong rather than absent.
+  refreshSummary();
+  refreshRail();
 }
 
 // --- Scanning ---------------------------------------------------------------
@@ -341,14 +426,13 @@ function loadFiles(found: { file: File; originalName: string }[], directoryName:
 async function scanPhotos(): Promise<void> {
   el.scan.disabled = true;
   el.copy.disabled = true;
-  el.copyStatus.textContent = '';
+  el.copyDone.hidden = true;
   el.scanBlocked.hidden = true;
   clearRows();
   el.resultsBlock.hidden = false;
-  el.scanProgress.hidden = false;
-  el.scanProgress.max = files.length;
-  el.scanProgress.value = 0;
-  el.scanStatus.textContent = `Lecture des photos (0/${files.length})…`;
+  el.scanMeter.hidden = false;
+  setMeter(el.scanMeter, el.scanMeterFill, 0, files.length);
+  el.scanStatus.textContent = `Lecture des photos (0/${String(files.length)})…`;
 
   let recognised = 0;
 
@@ -371,12 +455,12 @@ async function scanPhotos(): Promise<void> {
           photo === null ? 'error' : firstName ? 'ok' : 'missing',
         ),
       );
-      el.scanProgress.value = index + 1;
+      setMeter(el.scanMeter, el.scanMeterFill, index + 1, files.length);
       el.scanStatus.textContent = `Lecture des photos (${index + 1}/${files.length})…`;
     },
   );
 
-  el.scanProgress.hidden = true;
+  el.scanMeter.hidden = true;
   el.scan.disabled = false;
   scanDone = true;
   el.scanStatus.textContent = `${recognised} prénom${plural(recognised)} reconnu${plural(recognised)} sur ${files.length} photo${plural(files.length)}.`;
@@ -423,14 +507,14 @@ function createRow(
   } else {
     const empty = document.createElement('p');
     empty.className =
-      'flex size-full flex-col items-center justify-center gap-2 px-3 text-center ' +
-      'text-caption text-slate-600';
-    empty.append(icon('forbidden', 'size-7 text-slate-500'), 'Aperçu impossible');
+      'flex size-full flex-col items-center justify-center gap-word px-word text-center ' +
+      'text-caption text-ink-soft';
+    empty.append(icon('forbidden', 'size-7 text-amber-ink'), 'Aperçu impossible');
     imageArea.append(empty);
   }
 
   const bottom = document.createElement('div');
-  bottom.className = 'flex flex-1 flex-col gap-2 border-t border-tableau p-3';
+  bottom.className = 'gap-word flex flex-1 flex-col';
 
   const field = document.createElement('input');
   field.type = 'text';
@@ -445,7 +529,7 @@ function createRow(
   const statusArea = document.createElement('p');
 
   const origin = document.createElement('p');
-  origin.className = 'mt-auto pt-1 text-micro break-all text-slate-500';
+  origin.className = 'text-micro text-ink-soft pt-hair mt-auto break-all';
   origin.textContent = originalName;
 
   bottom.append(field, nameArea, statusArea, origin);
@@ -500,10 +584,10 @@ function renderRow(row: Row): void {
     el.subfolders.checked && row.targetName ? `${sanitiseForFileName(firstNameOf(row))}\\` : '';
 
   if (row.targetName) {
-    row.nameArea.className = 'font-mono text-caption break-all text-slate-700';
+    row.nameArea.className = 'font-mono text-caption text-ink break-all';
     row.nameArea.textContent = folder + row.targetName;
   } else {
-    row.nameArea.className = 'text-caption text-amber-900';
+    row.nameArea.className = 'text-caption text-red-ink font-bold';
     row.nameArea.textContent = 'Pas encore de nom de fichier';
   }
 
@@ -517,7 +601,7 @@ function renderRow(row: Row): void {
 interface RowState {
   /** Shown to the teacher, hence French. */
   label: string;
-  icon: string;
+  icon: IconName;
   badge: string;
   card: string;
 }
@@ -525,40 +609,42 @@ interface RowState {
 function rowState(row: Row): RowState {
   if (row.copied) {
     return {
-      label: 'Copiée',
+      label: 'Rangée',
       icon: 'copied',
-      badge: 'bg-green-100 text-green-900',
+      badge: 'border-green-ink text-green-ink bg-card',
       card: 'photo-card-copied',
     };
   }
   if (!firstNameOf(row)) {
+    // Nothing to correct on a photo the browser cannot even open, so it is not
+    // the red of a thing to redo.
     if (!row.readable || row.status === 'error') {
       return {
         label: row.readable ? 'Photo illisible' : 'Format HEIC, non lisible',
         icon: 'forbidden',
-        badge: 'bg-red-100 text-red-900',
-        card: 'photo-card-error',
+        badge: 'border-amber-ink text-amber-ink bg-amber-tint',
+        card: 'photo-card-unreadable',
       };
     }
     return {
       label: 'QR non trouvé',
-      icon: 'warning',
-      badge: 'bg-amber-100 text-amber-900',
-      card: 'photo-card-warning',
+      icon: 'attention',
+      badge: 'border-red-ink text-red-ink bg-red-tint',
+      card: 'photo-card-fix',
     };
   }
   if (row.status === 'error' && row.readable) {
     return {
       label: 'Copie impossible',
       icon: 'forbidden',
-      badge: 'bg-red-100 text-red-900',
-      card: 'photo-card-error',
+      badge: 'border-red-ink text-red-ink bg-red-tint',
+      card: 'photo-card-fix',
     };
   }
   return {
-    label: 'Prêt à copier',
-    icon: 'ready',
-    badge: 'bg-slate-200 text-slate-800',
+    label: 'À ranger',
+    icon: 'waiting',
+    badge: 'border-ink-soft text-ink bg-paper-shade',
     card: '',
   };
 }
@@ -602,27 +688,44 @@ function flash(card: HTMLElement): void {
 }
 
 function refreshSummary(): void {
-  let ready = 0;
+  let waiting = 0;
   let withoutName = 0;
   let unreadable = 0;
   let copied = 0;
 
   for (const row of rows) {
     if (row.copied) copied++;
-    else if (firstNameOf(row)) ready++;
+    else if (firstNameOf(row)) waiting++;
     else if (!row.readable || row.status === 'error') unreadable++;
     else withoutName++;
   }
 
-  const parts: string[] = [];
-  if (ready) parts.push(`${ready} prête${plural(ready)} à copier`);
-  if (withoutName) parts.push(`${withoutName} sans prénom`);
-  if (unreadable) parts.push(`${unreadable} illisible${plural(unreadable)}`);
-  if (copied) parts.push(`${copied} copiée${plural(copied)}`);
+  el.progressCount.textContent = `${copied} photo${plural(copied)} rangée${plural(copied)} sur ${rows.length}`;
+  setMeter(el.copyMeter, el.copyMeterFill, copied, rows.length);
+  el.progressNote.textContent = copied
+    ? 'Vos originaux n’ont pas bougé.'
+    : 'Rien n’est copié avant votre accord.';
 
-  el.summary.textContent = rows.length
-    ? `${rows.length} photo${plural(rows.length)} : ${parts.join(' · ')}`
-    : '';
+  // One count per state, each with its own icon and its own word: the colour is
+  // the third signal, never the first.
+  el.tallies.textContent = '';
+  const tallies: { count: number; word: string; icon: IconName; tone: string }[] = [
+    { count: copied, word: `rangée${plural(copied)}`, icon: 'copied', tone: 'text-green-ink' },
+    { count: withoutName, word: 'à corriger', icon: 'attention', tone: 'text-red-ink' },
+    {
+      count: unreadable,
+      word: `illisible${plural(unreadable)}`,
+      icon: 'forbidden',
+      tone: 'text-amber-ink',
+    },
+    { count: waiting, word: 'à ranger', icon: 'waiting', tone: 'text-ink-soft' },
+  ];
+  for (const tally of tallies) {
+    const item = document.createElement('li');
+    item.className = `tally ${tally.tone}`;
+    item.append(icon(tally.icon, 'size-5 shrink-0'), `${tally.count} ${tally.word}`);
+    el.tallies.append(item);
+  }
 
   const toFix = withoutName + unreadable;
   el.needsAttention.hidden = toFix === 0;
@@ -650,8 +753,14 @@ function refreshCopyButton(): void {
   el.copy.disabled = !(scanDone && pending && destinationReady);
 
   const reason = el.copy.disabled ? copyBlockedReason(pending, destinationReady) : '';
-  el.copyBlocked.textContent = reason;
+  el.copyBlockedText.textContent = reason;
   el.copyBlocked.hidden = reason === '';
+
+  // Where the photos will land, said before she clicks rather than after.
+  el.copyTarget.textContent = destinationLabel
+    ? `Les photos seront copiées dans ${destinationLabel}, sous leur nouveau nom.`
+    : '';
+  refreshRail();
 }
 
 /**
@@ -677,9 +786,7 @@ async function copyPhotos(): Promise<void> {
   if (todo.length === 0) return;
 
   el.copy.disabled = true;
-  el.copyProgress.hidden = false;
-  el.copyProgress.max = todo.length;
-  el.copyProgress.value = 0;
+  el.copyDone.hidden = true;
 
   let copied = 0;
   let failed = 0;
@@ -696,16 +803,21 @@ async function copyPhotos(): Promise<void> {
       console.error(error);
     }
     renderRow(row);
-    el.copyProgress.value = copied + failed;
+    refreshSummary();
   }
 
-  el.copyProgress.hidden = true;
   // The app's name, said at the one moment it means something — the photos have
   // just been put away. Not when something failed: « et zou, c'est rangé » over a
   // report of losses would read as the app not having noticed.
   el.copyStatus.textContent = failed
     ? `${copied} photo${plural(copied)} copiée${plural(copied)}, ${failed} en échec.`
     : `${copied} photo${plural(copied)} copiée${plural(copied)}. Et zou, c'est rangé.`;
+  el.copyOutcome.textContent = destinationLabel
+    ? `Elles sont dans ${destinationLabel}. Vos originaux n’ont pas bougé.`
+    : 'Vos originaux n’ont pas bougé.';
+  el.copyDone.className = `callout mt-line ${failed ? 'callout-warn' : 'callout-ok'}`;
+  el.copyDone.replaceChildren(icon(failed ? 'warning' : 'copied'), el.copyDoneText);
+  el.copyDone.hidden = false;
   refreshSummary();
   refreshCopyButton();
 }
@@ -761,8 +873,8 @@ async function downloadRow(row: Row): Promise<void> {
 // --- Misc -------------------------------------------------------------------
 
 function showWarning(text: string): void {
-  const box = document.createElement('div');
-  box.className = 'mb-4 rounded-lg bg-blue-50 px-4 py-3';
-  box.textContent = text;
+  const box = document.createElement('p');
+  box.className = 'callout callout-warn mt-line';
+  box.append(icon('warning'), text);
   el.warning.append(box);
 }

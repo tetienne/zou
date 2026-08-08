@@ -13,105 +13,203 @@
     <link rel="icon" href="favicon.svg" />
     <script type="module" src="/src/home.ts"></script>
   </head>
-  <body class="px-4 pb-16">
-    <header class="border-tableau mx-auto max-w-5xl border-b-2 pt-6 pb-4">
-      <p class="text-micro font-semibold tracking-widest text-slate-500 uppercase">Zou</p>
-      <h1 class="text-h1 mt-1 font-bold">Ranger les photos des travaux de la classe</h1>
-      <p class="mt-1 text-slate-500">
-        Vous posez une étiquette QR à côté du travail, vous photographiez, et zou, l'image part dans le dossier du bon
-        enfant.
-      </p>
+  <body class="px-line pb-page">
+    <header
+      class="border-tableau gap-para pt-section pb-para mx-auto flex max-w-5xl flex-wrap items-start border-b-3 border-double"
+    >
+      <!-- A stamp on the cover of an exercise book: the name carries the
+           product, so it is drawn rather than set. -->
+      <svg class="shrink-0 -rotate-4" width="132" height="92" viewBox="0 0 132 92" role="img" aria-label="Zou">
+        <rect x="4" y="4" width="124" height="84" rx="4" fill="none" stroke="#a8352b" stroke-width="3"></rect>
+        <rect
+          x="11"
+          y="11"
+          width="110"
+          height="70"
+          rx="2"
+          fill="none"
+          stroke="#a8352b"
+          stroke-width="1.5"
+          stroke-dasharray="5 4"
+        ></rect>
+        <text
+          x="66"
+          y="52"
+          text-anchor="middle"
+          font-family="Fraunces, Georgia, serif"
+          font-size="34"
+          font-weight="700"
+          fill="#232457"
+        >
+          Zou
+        </text>
+        <text
+          x="66"
+          y="70"
+          text-anchor="middle"
+          font-family="Karla, sans-serif"
+          font-size="9"
+          letter-spacing="2.5"
+          fill="#a8352b"
+        >
+          CLASSE
+        </text>
+      </svg>
+
+      <div class="min-w-0 flex-1">
+        <h1 class="text-h1 font-bold">Ranger les photos des travaux de la classe</h1>
+        <p class="page-lead">
+          Vous posez une étiquette QR à côté du travail, vous photographiez, et zou, l'image part dans le dossier du bon
+          enfant.
+        </p>
+      </div>
+
+      <!-- Filled by home.ts with a real label, at the size it is printed. -->
+      <div
+        class="sample-label"
+        id="sample-label"
+        role="img"
+        aria-label="Exemple d'étiquette : un QR code, le prénom Léa et un petit dessin."
+      ></div>
     </header>
 
     <main class="mx-auto max-w-5xl">
-      <div class="mt-6 grid gap-4 sm:grid-cols-2">
-        <a
-          class="border-tableau flex flex-col rounded-xl border bg-white p-5 no-underline hover:border-blue-700 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-          href="labels.html"
-        >
-          <strong class="text-lead mb-1 block text-blue-700">1. Créer les étiquettes</strong>
-          Tapez la liste des prénoms, imprimez la planche d'étiquettes QR et posez-en une à côté de chaque travail avant
-          de le photographier.
-          <span class="hint mt-3">À faire une fois par an.</span>
+      <div class="gap-para mt-section grid sm:grid-cols-2">
+        <a class="action-card" href="labels.html">
+          <span class="action-card-number" aria-hidden="true">1</span>
+          <h2 class="text-h2 mt-word font-bold">Créer les étiquettes</h2>
+          <p class="mt-word text-ink-soft">
+            Tapez la liste des prénoms, imprimez la planche d'étiquettes QR et posez-en une à côté de chaque travail
+            avant de le photographier.
+          </p>
+          <span class="action-card-foot mt-line">
+            <span class="font-hand text-red-ink text-h2">À faire une fois par an.</span>
+            <span class="gap-hair inline-flex items-center font-bold">
+              Commencer
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                class="size-4"
+              >
+                <path d="M4 12h15"></path>
+                <path d="m13 6 6 6-6 6"></path>
+              </svg>
+            </span>
+          </span>
         </a>
-        <a
-          class="border-tableau flex flex-col rounded-xl border bg-white p-5 no-underline hover:border-blue-700 hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-          href="photos.html"
-        >
-          <strong class="text-lead mb-1 block text-blue-700">2. Ranger les photos</strong>
-          Choisissez le dossier des photos et le dossier de destination : chaque photo est copiée et renommée avec le
-          prénom de l'enfant.
-          <span class="hint mt-3">À faire chaque semaine.</span>
+        <a class="action-card" href="photos.html">
+          <span class="action-card-number" aria-hidden="true">2</span>
+          <h2 class="text-h2 mt-word font-bold">Ranger les photos</h2>
+          <p class="mt-word text-ink-soft">
+            Choisissez le dossier des photos et le dossier de destination : chaque photo est copiée et renommée avec le
+            prénom de l'enfant.
+          </p>
+          <span class="action-card-foot mt-line">
+            <span class="font-hand text-red-ink text-h2">À faire chaque semaine.</span>
+            <span class="gap-hair inline-flex items-center font-bold">
+              Commencer
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                class="size-4"
+              >
+                <path d="M4 12h15"></path>
+                <path d="m13 6 6 6-6 6"></path>
+              </svg>
+            </span>
+          </span>
         </a>
       </div>
 
-      <p
-        class="border-tableau text-caption mt-6 flex items-start gap-3 rounded-xl border bg-white px-4 py-3 text-slate-700"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          class="mt-0.5 size-5 shrink-0 text-slate-500"
-        >
-          <rect x="3" y="11" width="18" height="11" rx="2"></rect>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      <div class="border-tableau bg-card gap-para mt-section p-line flex flex-wrap items-center rounded-sm border">
+        <svg class="shrink-0 -rotate-8" width="112" height="112" viewBox="0 0 126 126" aria-hidden="true">
+          <circle cx="63" cy="63" r="59" fill="none" stroke="#1f6b45" stroke-width="4"></circle>
+          <circle cx="63" cy="63" r="50" fill="none" stroke="#1f6b45" stroke-width="1.5"></circle>
+          <path
+            d="M50 62v-8a13 13 0 0 1 26 0v8"
+            fill="none"
+            stroke="#1f6b45"
+            stroke-width="4"
+            stroke-linecap="round"
+          ></path>
+          <rect x="45" y="62" width="36" height="26" rx="4" fill="none" stroke="#1f6b45" stroke-width="4"></rect>
+          <!-- The arc sweeps left to right over the top, so the legend reads the
+               right way up rather than mirrored along the bottom. -->
+          <path id="stamp-arc" d="M19 63a44 44 0 0 1 88 0" fill="none"></path>
+          <text font-family="Karla, sans-serif" font-size="9" font-weight="700" fill="#1f6b45">
+            <textPath
+              href="#stamp-arc"
+              startOffset="50%"
+              text-anchor="middle"
+              textLength="130"
+              lengthAdjust="spacingAndGlyphs"
+            >
+              RIEN NE SORT DE L'ORDINATEUR
+            </textPath>
+          </text>
         </svg>
-        <span
-          >Les photos restent sur votre ordinateur, tout le travail se fait dans le navigateur. Il n'y a rien à
-          installer, et l'application copie vos photos sans jamais toucher aux originaux.</span
-        >
-      </p>
+        <p class="max-w-[58ch] min-w-[18rem] flex-1">
+          Les photos restent sur votre ordinateur, tout le travail se fait dans le navigateur. Il n'y a rien à
+          installer, et l'application copie vos photos sans jamais toucher aux originaux.
+        </p>
+      </div>
 
       <!-- These answers are the only prose a search engine has to work with: the
            two pages above are tools, and a tool is almost entirely buttons. They
            are written for the teacher who lands here from a search and wants to
            know whether it works on the school computer, not to carry keywords. -->
-      <h2 class="text-h2 mt-10 mb-3 font-semibold">Questions fréquentes</h2>
-      <!-- Same grid as the two cards at the top: one layout rule for the page. -->
-      <div class="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-        <div>
-          <h3 class="text-lead font-semibold">Faut-il installer un logiciel ?</h3>
-          <p class="mt-1">
+      <div class="section-rule mt-section mb-line">
+        <h2 class="text-h2 font-bold">Questions fréquentes</h2>
+      </div>
+      <div class="calm gap-line grid sm:grid-cols-2">
+        <div class="faq-card">
+          <h3 class="text-lead font-bold">Faut-il installer un logiciel ?</h3>
+          <p class="mt-hair text-ink-soft">
             Non. Zou est une page web : vous l'ouvrez depuis un marque-page et elle fonctionne. Rien à installer sur
             l'ordinateur de l'école, donc rien à faire autoriser.
           </p>
         </div>
-        <div>
-          <h3 class="text-lead font-semibold">Où partent les photos de mes élèves ?</h3>
-          <p class="mt-1">
+        <div class="faq-card">
+          <h3 class="text-lead font-bold">Où partent les photos de mes élèves ?</h3>
+          <p class="mt-hair text-ink-soft">
             Nulle part : elles ne quittent pas votre ordinateur. Il n'y a ni compte à créer, ni inscription, ni adresse
             e-mail à donner.
           </p>
         </div>
-        <div>
-          <h3 class="text-lead font-semibold">Est-ce que c'est gratuit ?</h3>
-          <p class="mt-1">
+        <div class="faq-card">
+          <h3 class="text-lead font-bold">Est-ce que c'est gratuit ?</h3>
+          <p class="mt-hair text-ink-soft">
             Oui, entièrement, et sans publicité. Zou est un projet ouvert : chacun peut l'utiliser dans sa classe, et le
             code est libre.
           </p>
         </div>
-        <div>
-          <h3 class="text-lead font-semibold">Et les photos prises avec un iPhone ?</h3>
-          <p class="mt-1">
+        <div class="faq-card">
+          <h3 class="text-lead font-bold">Et les photos prises avec un iPhone ?</h3>
+          <p class="mt-hair text-ink-soft">
             L'iPhone enregistre par défaut dans un format que le navigateur ne sait pas ouvrir (HEIC). Ces photos sont
             signalées plutôt que rangées. Réglez l'appareil photo sur « Le plus compatible » et le problème disparaît.
           </p>
         </div>
-        <div>
-          <h3 class="text-lead font-semibold">Combien de photos peut-on ranger d'un coup ?</h3>
-          <p class="mt-1">
+        <div class="faq-card">
+          <h3 class="text-lead font-bold">Combien de photos peut-on ranger d'un coup ?</h3>
+          <p class="mt-hair text-ink-soft">
             Une carte mémoire de fin de période, plusieurs centaines de photos, passe sans difficulté, et la page reste
             utilisable pendant ce temps.
           </p>
         </div>
-        <div>
-          <h3 class="text-lead font-semibold">Que se passe-t-il si une étiquette n'est pas lue ?</h3>
-          <p class="mt-1">
+        <div class="faq-card">
+          <h3 class="text-lead font-bold">Que se passe-t-il si une étiquette n'est pas lue ?</h3>
+          <p class="mt-hair text-ink-soft">
             Rien n'est rangé au hasard. Les photos sans prénom passent en tête de la galerie avec un cadre épais ; vous
             tapez le prénom, aidé par la liste de la classe, et la photo rejoint les autres.
           </p>
@@ -119,16 +217,9 @@
       </div>
     </main>
 
-    <footer
-      class="border-tableau text-caption mx-auto mt-10 flex max-w-5xl items-center gap-4 border-t pt-4 text-slate-500"
-    >
-      <a
-        class="inline-flex items-center gap-2 text-slate-500 hover:text-blue-700 hover:underline"
-        href="%SOURCE_URL%"
-        target="_blank"
-        rel="noreferrer"
-      >
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4">
+    <footer class="page-foot">
+      <a href="%SOURCE_URL%" target="_blank" rel="noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path
             d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.4-1.27.73-1.56-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
           ></path>

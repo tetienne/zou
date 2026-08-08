@@ -11,30 +11,75 @@
     <link rel="icon" href="favicon.svg" />
     <script type="module" src="/src/photos.ts"></script>
   </head>
-  <body class="px-4 pb-16">
-    <header class="border-tableau mx-auto max-w-5xl border-b-2 pt-6 pb-4">
-      <p class="text-micro font-semibold tracking-widest text-slate-500 uppercase">Zou</p>
-      <h1 class="text-h1 mt-1 font-bold">Ranger les photos</h1>
-      <p class="mt-1 text-slate-500">
-        L'application copie les photos dans le dossier de votre choix et les renomme. Vos originaux restent où ils sont.
+  <body class="px-line pb-page">
+    <header class="pt-section mx-auto max-w-5xl">
+      <p class="eyebrow">Zou</p>
+      <h1 class="text-h1 mt-hair font-bold">Ranger les photos</h1>
+      <p class="page-lead">
+        Vos photos d'origine ne bougent pas : Zou en fait une copie renommée avec le prénom de l'enfant.
       </p>
-      <a class="mt-3 inline-block text-blue-700 hover:underline" href="index.html">← Retour à l'accueil</a>
     </header>
 
-    <main class="mx-auto max-w-5xl pt-4">
+    <div class="step-rail-bar">
+      <!-- The kickers and the discs are rewritten by photos.ts; what is written
+           here is the state of a page that has just opened. -->
+      <nav aria-label="Progression du rangement">
+        <ol class="step-rail" id="rail">
+          <li class="is-current" aria-current="step">
+            <span class="step-disc">1</span>
+            <span class="step-rail-text">
+              <span class="eyebrow">Étape 1 · en cours</span>
+              <span class="font-bold">Les photos</span>
+            </span>
+          </li>
+          <li id="rail-destination">
+            <span class="step-disc">2</span>
+            <span class="step-rail-text">
+              <span class="eyebrow">Étape 2</span>
+              <span class="font-bold">Où les ranger</span>
+            </span>
+          </li>
+          <li>
+            <span class="step-disc">3</span>
+            <span class="step-rail-text">
+              <span class="eyebrow">Étape 3</span>
+              <span class="font-bold">Lire les QR</span>
+            </span>
+          </li>
+          <li>
+            <span class="step-disc">4</span>
+            <span class="step-rail-text">
+              <span class="eyebrow">Étape 4</span>
+              <span class="font-bold">Vérifier et copier</span>
+            </span>
+          </li>
+        </ol>
+      </nav>
+      <p class="font-bold" id="rail-caption">Étape 1 sur 4</p>
+      <a class="backlink" href="index.html">← Retour à l'accueil</a>
+    </div>
+
+    <main class="mx-auto max-w-5xl">
       <div id="warning" role="status"></div>
 
-      <section class="step">
-        <h2 class="text-h2 mb-1 font-semibold">1. Les photos à ranger</h2>
-        <p class="hint mb-3">
-          Branchez d'abord l'appareil photo ou le téléphone : ses photos apparaissent comme un dossier.
-        </p>
-        <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="choose-source" class="button">Choisir le dossier des photos</button>
-          <span class="text-caption font-mono text-slate-500" id="source-name">aucun dossier choisi</span>
+      <div class="stage-head" id="stage-photos">
+        <p class="stage-number" aria-hidden="true">1</p>
+        <div class="min-w-0">
+          <p class="eyebrow">Étape 1 sur 4</p>
+          <h2 class="text-h2 font-bold">Les photos à ranger</h2>
+          <p class="stage-lead">
+            Branchez d'abord l'appareil photo ou le téléphone : ses photos apparaissent comme un dossier.
+          </p>
+        </div>
+      </div>
+
+      <section class="panel" aria-label="Le dossier des photos">
+        <div class="chooser-row">
+          <button type="button" id="choose-source" class="button-secondary">Choisir le dossier des photos</button>
+          <span class="path" id="source-name" data-empty>Aucun dossier choisi pour l'instant</span>
         </div>
         <!-- Offered, not restored: the browser only renews folder access from a click. -->
-        <p class="mt-3 flex flex-wrap items-center gap-3" id="source-recall" hidden>
+        <p class="panel-aside chooser-row" id="source-recall" hidden>
           <button type="button" id="source-resume" class="button-secondary">
             Reprendre <span id="source-recall-name" class="font-mono"></span>
           </button>
@@ -42,76 +87,82 @@
         </p>
       </section>
 
-      <section class="step">
-        <h2 class="text-h2 mb-3 font-semibold">2. Où les ranger</h2>
-        <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="choose-destination" class="button">Choisir le dossier de destination</button>
-          <span class="text-caption font-mono text-slate-500" id="destination-name">aucun dossier choisi</span>
+      <div class="stage-head" id="stage-destination">
+        <p class="stage-number" aria-hidden="true">2</p>
+        <div class="min-w-0">
+          <p class="eyebrow">Étape 2 sur 4</p>
+          <h2 class="text-h2 font-bold">Où les ranger</h2>
+          <!-- Written by photos.ts: what happens here depends on whether the
+               browser can write into a folder at all. -->
+          <p class="stage-lead" id="destination-lead"></p>
         </div>
-        <p class="mt-3 flex flex-wrap items-center gap-3" id="destination-recall" hidden>
+      </div>
+
+      <section class="panel" aria-label="Le dossier de destination">
+        <div class="chooser-row">
+          <button type="button" id="choose-destination" class="button-secondary">
+            Choisir le dossier de destination
+          </button>
+          <span class="path" id="destination-name" data-empty>Aucun dossier choisi pour l'instant</span>
+        </div>
+        <p class="panel-aside chooser-row" id="destination-recall" hidden>
           <button type="button" id="destination-resume" class="button-secondary">
             Reprendre <span id="destination-recall-name" class="font-mono"></span>
           </button>
           <span class="hint">le dossier de la dernière fois</span>
         </p>
-        <label class="mt-3 block">
-          <input type="checkbox" id="subfolders" checked class="align-middle" />
-          Créer un sous-dossier par prénom
-        </label>
-        <label class="mt-2 block" for="pattern">
-          Nom des fichiers :
-          <select id="pattern" class="field">
-            <option value="name_date_num">Léa_2026-06-14_01.jpg</option>
-            <option value="name_num">Léa_01.jpg</option>
-            <option value="date_name_num">2026-06-14_Léa_01.jpg</option>
-          </select>
-        </label>
-        <p class="hint mt-2">La date est celle de la photo (date du fichier).</p>
-      </section>
 
-      <section class="step">
-        <h2 class="text-h2 mb-3 font-semibold">3. Lire les QR codes</h2>
-        <button type="button" id="scan" class="button" disabled>Lire les étiquettes</button>
-        <!-- Why the button above is dead, said where she is looking: photos.ts fills it. -->
-        <p class="hint mt-2" id="scan-blocked">Choisissez d'abord le dossier des photos, à l'étape 1.</p>
-        <progress id="scan-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
-        <p class="hint mt-2" id="scan-status" role="status"></p>
-      </section>
+        <div class="panel-aside gap-line grid">
+          <label class="gap-word flex items-start font-bold">
+            <input type="checkbox" id="subfolders" checked class="mt-hair size-5 shrink-0" />
+            <span>
+              Créer un sous-dossier par prénom
+              <span class="hint block font-normal" id="subfolders-hint"
+                >Un dossier « Léa », un dossier « Malo », et ainsi de suite.</span
+              >
+            </span>
+          </label>
 
-      <section class="step" id="results-block" hidden>
-        <h2 class="text-h2 mb-1 font-semibold">4. Vérifier et copier</h2>
-        <p class="hint mb-4">Vous pouvez corriger un prénom en cliquant dessus.</p>
-
-        <div id="needs-attention" class="mb-4 rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-3" hidden>
-          <p class="text-lead flex items-start gap-2 font-semibold text-amber-900">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-              class="mt-0.5 size-5 shrink-0"
-            >
-              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-              <path d="M12 9v4"></path>
-              <path d="M12 17h.01"></path>
-            </svg>
-            <span id="needs-attention-text"></span>
+          <p>
+            <label class="field-label" for="pattern">Nom des fichiers</label>
+            <select id="pattern" class="field">
+              <option value="name_date_num">Léa_2026-06-14_01.jpg</option>
+              <option value="name_num">Léa_01.jpg</option>
+              <option value="date_name_num">2026-06-14_Léa_01.jpg</option>
+            </select>
+            <span class="hint mt-hair block">La date est celle de la photo (date du fichier).</span>
           </p>
-          <p class="text-caption mt-1 text-amber-900">
-            Elles sont placées au début de la galerie ci-dessous. Écrivez le prénom et la photo rejoint les autres.
-          </p>
-          <!-- Shown only when the folder holds HEIC files: the remedy is on the iPhone, not here. -->
-          <p class="text-caption mt-2 text-amber-900" id="heic-note" hidden></p>
         </div>
+      </section>
 
-        <p
-          id="all-ready"
-          class="mb-4 flex items-center gap-2 rounded-xl border-2 border-green-700 bg-green-50 px-4 py-3 font-semibold text-green-900"
-          hidden
-        >
+      <div class="stage-head" id="stage-scan">
+        <p class="stage-number" aria-hidden="true">3</p>
+        <div class="min-w-0">
+          <p class="eyebrow">Étape 3 sur 4</p>
+          <h2 class="text-h2 font-bold">Lire les QR codes</h2>
+          <p class="stage-lead">
+            Zou ouvre chaque photo et cherche l'étiquette. Les photos ne sont ni modifiées ni déplacées.
+          </p>
+        </div>
+      </div>
+
+      <section class="panel" aria-label="Lire les étiquettes">
+        <button type="button" id="scan" class="cta" disabled aria-describedby="scan-blocked">
+          Lire les étiquettes
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 12h15"></path>
+            <path d="m13 6 6 6-6 6"></path>
+          </svg>
+        </button>
+        <p class="cta-reason" id="scan-blocked">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -120,51 +171,166 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             aria-hidden="true"
-            class="size-5 shrink-0"
           >
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="m9 12 2 2 4-4"></path>
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <path d="M12 9v4"></path>
+            <path d="M12 17h.01"></path>
           </svg>
-          Toutes les photos ont un prénom.
+          <span id="scan-blocked-text"
+            >Ce bouton s'allumera dès que vous aurez choisi le dossier des photos, à l'étape 1.</span
+          >
         </p>
-
-        <div class="flex flex-wrap items-center gap-3">
-          <button type="button" id="copy" class="button" disabled>Copier les photos</button>
-          <span id="copy-status" class="hint" role="status"></span>
+        <div
+          class="meter mt-line"
+          id="scan-meter"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="1"
+          aria-valuenow="0"
+          aria-label="Lecture des étiquettes"
+          hidden
+        >
+          <div class="meter-fill" id="scan-meter-fill"></div>
         </div>
-        <p class="hint mt-2" id="copy-blocked" hidden></p>
-        <progress id="copy-progress" value="0" max="1" class="mt-3 h-5 w-full" hidden></progress>
+        <p class="mt-word" id="scan-status" role="status"></p>
+      </section>
 
-        <div class="border-tableau mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-          <p id="summary" class="hint"></p>
-          <fieldset class="flex flex-wrap items-center gap-2">
-            <legend class="sr-only">Taille des photos</legend>
-            <span class="hint">Taille des photos :</span>
-            <div class="border-tableau inline-flex overflow-hidden rounded-lg border bg-white">
-              <label class="border-tableau border-r">
-                <input type="radio" name="size" value="small" class="peer sr-only" />
-                <span
-                  class="text-caption block cursor-pointer px-3 py-1 peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
-                  >Petites</span
-                >
-              </label>
-              <label class="border-tableau border-r">
-                <input type="radio" name="size" value="medium" class="peer sr-only" checked />
-                <span
-                  class="text-caption block cursor-pointer px-3 py-1 peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
-                  >Moyennes</span
-                >
-              </label>
-              <label>
-                <input type="radio" name="size" value="large" class="peer sr-only" />
-                <span
-                  class="text-caption block cursor-pointer px-3 py-1 peer-checked:bg-blue-700 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-blue-700 hover:bg-slate-100"
-                  >Grandes</span
-                >
-              </label>
-            </div>
-          </fieldset>
+      <div id="results-block" hidden>
+        <div class="stage-head" id="stage-check">
+          <p class="stage-number" aria-hidden="true">4</p>
+          <div class="min-w-0">
+            <p class="eyebrow">Étape 4 sur 4</p>
+            <h2 class="text-h2 font-bold">Vérifier et copier</h2>
+            <p class="stage-lead">
+              Un prénom manque ? Écrivez-le dans la carte : la photo rejoint aussitôt les autres.
+            </p>
+          </div>
         </div>
+
+        <section class="panel" aria-label="Avancement du rangement">
+          <div class="meter-top">
+            <p class="meter-count" id="progress-count"></p>
+            <p class="hint" id="progress-note">Rien n'est copié avant votre accord.</p>
+          </div>
+          <div
+            class="meter"
+            id="copy-meter"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="1"
+            aria-valuenow="0"
+            aria-label="Photos rangées"
+          >
+            <div class="meter-fill" id="copy-meter-fill"></div>
+          </div>
+          <ul class="tallies" id="tallies"></ul>
+
+          <div class="callout callout-warn mt-line" id="needs-attention" role="status" hidden>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+            <span>
+              <strong id="needs-attention-text"></strong>
+              Elles sont au début de la galerie, avec un cadre épais et un coin replié. Écrivez le prénom et la photo
+              rejoint les autres. Une photo sans prénom n'est jamais copiée.
+              <!-- Shown only when the folder holds HEIC files: the remedy is on the iPhone, not here. -->
+              <span class="mt-word block" id="heic-note" hidden></span>
+            </span>
+          </div>
+
+          <p class="callout callout-ok mt-line" id="all-ready" hidden>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+            <span>Toutes les photos ont un prénom.</span>
+          </p>
+        </section>
+
+        <div class="mt-para">
+          <button type="button" id="copy" class="cta" disabled aria-describedby="copy-blocked">
+            <span id="copy-label">Copier les photos</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 12h15"></path>
+              <path d="m13 6 6 6-6 6"></path>
+            </svg>
+          </button>
+          <p class="cta-reason" id="copy-blocked" hidden>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+            <span id="copy-blocked-text"></span>
+          </p>
+          <p class="hint mt-word" id="copy-target"></p>
+
+          <!-- Its icon says which of the two endings this is, so photos.ts puts
+               it there rather than the page. -->
+          <p class="callout callout-ok mt-line" id="copy-done" role="status" hidden>
+            <span id="copy-done-text">
+              <strong id="copy-status"></strong>
+              <span id="copy-outcome"></span>
+            </span>
+          </p>
+        </div>
+
+        <div class="section-rule mt-section mb-line">
+          <h2 class="text-h2 font-bold">Les photos, une par une</h2>
+        </div>
+
+        <fieldset class="gap-word flex flex-wrap items-center">
+          <legend class="sr-only">Taille des photos</legend>
+          <span class="hint">Taille des vignettes :</span>
+          <div class="border-ink-soft inline-flex overflow-hidden rounded-sm border-2">
+            <label class="border-ink-soft border-r-2">
+              <input type="radio" name="size" value="small" class="peer sr-only" />
+              <span class="pill">Petites</span>
+            </label>
+            <label class="border-ink-soft border-r-2">
+              <input type="radio" name="size" value="medium" class="peer sr-only" checked />
+              <span class="pill">Moyennes</span>
+            </label>
+            <label>
+              <input type="radio" name="size" value="large" class="peer sr-only" />
+              <span class="pill">Grandes</span>
+            </label>
+          </div>
+        </fieldset>
 
         <div id="results" class="gallery gallery-medium"></div>
 
@@ -177,19 +343,12 @@
         <!-- eslint-disable @html-eslint/use-baseline -->
         <datalist id="known-names"></datalist>
         <!-- eslint-enable @html-eslint/use-baseline -->
-      </section>
+      </div>
     </main>
 
-    <footer
-      class="border-tableau text-caption mx-auto mt-10 flex max-w-5xl items-center gap-4 border-t pt-4 text-slate-500"
-    >
-      <a
-        class="inline-flex items-center gap-2 text-slate-500 hover:text-blue-700 hover:underline"
-        href="%SOURCE_URL%"
-        target="_blank"
-        rel="noreferrer"
-      >
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4">
+    <footer class="page-foot">
+      <a href="%SOURCE_URL%" target="_blank" rel="noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path
             d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.4-1.27.73-1.56-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
           ></path>
