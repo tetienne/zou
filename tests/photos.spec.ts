@@ -183,3 +183,19 @@ test('rebuilds the gallery on a second scan', async ({ page }) => {
   );
   expect(showing).toBeGreaterThan(0);
 });
+
+// The panel is unhidden before the first photo of the new folder is read, so a
+// tally left over from the previous one is not an empty panel: it is a count
+// that lies about work she has not started.
+test('forgets the tally of the previous folder when another one is chosen', async ({ page }) => {
+  await useFakeFolders(page, FOLDER);
+  await page.goto('photos.html');
+  await scan(page);
+  await expect(page.locator('#progress-count')).toHaveText('0 photo rangée sur 8');
+
+  await page.getByRole('button', { name: 'Changer de dossier' }).click();
+  await expect(page.getByText(/— 8 photos/)).toBeVisible();
+
+  await expect(page.locator('#progress-count')).toHaveText('0 photo rangée sur 0');
+  await expect(page.locator('#tallies')).toContainText('0 rangée');
+});

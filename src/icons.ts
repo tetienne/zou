@@ -2,7 +2,11 @@
 // by colour alone: every badge, tally and callout pairs its colour with one of
 // these and with a word.
 
-const ICON_PATHS: Record<string, string> = {
+// Not annotated `Record<string, string>`: the literal keys are the type, so a
+// name outside the set stops compiling. A state whose icon silently came back
+// empty would be a state carried by colour alone — the one thing this set
+// exists to prevent.
+const ICON_PATHS = {
   ready: '<path d="m20 6-11 11-5-5"/>',
   warning:
     '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>' +
@@ -13,7 +17,9 @@ const ICON_PATHS: Record<string, string> = {
   waiting: '<circle cx="12" cy="12" r="4"/>',
 };
 
-export function icon(name: string, className = ''): SVGSVGElement {
+export type IconName = keyof typeof ICON_PATHS;
+
+export function icon(name: IconName, className = ''): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('fill', 'none');
@@ -23,6 +29,6 @@ export function icon(name: string, className = ''): SVGSVGElement {
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('aria-hidden', 'true');
   if (className) svg.setAttribute('class', className);
-  svg.innerHTML = ICON_PATHS[name] ?? '';
+  svg.innerHTML = ICON_PATHS[name];
   return svg;
 }

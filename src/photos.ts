@@ -15,7 +15,7 @@ import {
 } from './names';
 import { findFreeFileName, planFileNames, type PhotoEntry } from './filing';
 import { required } from './dom';
-import { icon } from './icons';
+import { icon, type IconName } from './icons';
 import { showRail } from './step-rail';
 import { directoryPicker as folderPicker, supportsFolders, type Directory } from './folder-access';
 import { forgetFolder, grantAccess, recallFolder, rememberFolder } from './folder-memory';
@@ -145,8 +145,11 @@ function refreshRail(): void {
   const current = done.indexOf(false) + 1;
   showRail(railSteps, done, current);
 
+  const total = railSteps.length;
   el.railCaption.textContent =
-    current === 0 ? 'Les 4 étapes sont faites' : `Étape ${String(current)} sur 4`;
+    current === 0
+      ? `Les ${String(total)} étapes sont faites`
+      : `Étape ${String(current)} sur ${String(total)}`;
 }
 
 /** A bar drawn by hand rather than a `<progress>`, to match the rest. */
@@ -366,6 +369,10 @@ function loadFiles(found: { file: File; originalName: string }[], directoryName:
       ? 'Ce dossier ne contient aucune image. Choisissez-en un autre.'
       : 'Ce bouton s’allumera dès que vous aurez choisi le dossier des photos, à l’étape 1.';
   el.scanBlocked.hidden = found.length > 0;
+  // `scanPhotos` unhides the progress panel before the first photo is read, so
+  // without this the tallies of the previous folder stay on screen for the
+  // whole scan — numbers that are wrong rather than absent.
+  refreshSummary();
   refreshRail();
 }
 
@@ -549,7 +556,7 @@ function renderRow(row: Row): void {
 interface RowState {
   /** Shown to the teacher, hence French. */
   label: string;
-  icon: string;
+  icon: IconName;
   badge: string;
   card: string;
 }
@@ -657,7 +664,7 @@ function refreshSummary(): void {
   // One count per state, each with its own icon and its own word: the colour is
   // the third signal, never the first.
   el.tallies.textContent = '';
-  for (const tally of [
+  const tallies: { count: number; word: string; icon: IconName; tone: string }[] = [
     { count: copied, word: `rangée${plural(copied)}`, icon: 'copied', tone: 'text-green-ink' },
     { count: withoutName, word: 'à corriger', icon: 'pencil', tone: 'text-red-ink' },
     {
@@ -667,7 +674,8 @@ function refreshSummary(): void {
       tone: 'text-amber-ink',
     },
     { count: waiting, word: 'en attente', icon: 'waiting', tone: 'text-ink-soft' },
-  ]) {
+  ];
+  for (const tally of tallies) {
     const item = document.createElement('li');
     item.className = `tally ${tally.tone}`;
     item.append(icon(tally.icon, 'size-5 shrink-0'), `${tally.count} ${tally.word}`);
