@@ -16,9 +16,8 @@
   /* One job only: how often she does this. */
   --font-hand: 'Caveat', 'Segoe Script', cursive;
 
-  /* Six steps, and nothing between them. The pages used to pick a size per
-     element — 0.85, 0.9, 0.92 and 0.95 rem all appeared, close enough to read
-     as an accident rather than a hierarchy. */
+  /* Six steps, and nothing between them: sizes a fraction apart read as an
+     accident rather than as a hierarchy. */
   --text-micro: 0.8rem;
   --text-caption: 0.9rem;
   --text-body: 1.0625rem;
@@ -33,10 +32,8 @@
   --text-h2--line-height: 1.3;
   --text-h1--line-height: 1.15;
 
-  /* Six steps, and nothing between them — the same discipline as the text
-     sizes above, which the pages did not have: `mt-1`, `mt-3`, `mt-4`, `mt-6`,
-     `mt-8` and `mt-10` all appeared on the home page, six values for three
-     intentions. Named after what they separate, not after how big they are.
+  /* The same discipline for the vertical rhythm, named after what a step
+     separates rather than after how big it is.
 
      A name here is also a utility suffix, so it must not collide with one
      Tailwind already ships: `--spacing-block` quietly redefined `inline-block`
@@ -199,6 +196,10 @@
     @apply gap-word text-ink-soft hover:text-red-ink inline-flex items-center hover:underline;
   }
 
+  .page-foot a svg {
+    @apply size-4;
+  }
+
   /* --- The step trail ----------------------------------------------------- */
 
   /* A page here is one task cut into a few moments, and the trail says which
@@ -288,6 +289,10 @@
       3px 3px 0 1px var(--color-ink-soft);
   }
 
+  .cta > svg {
+    @apply size-6 shrink-0;
+  }
+
   .cta:hover:not(:disabled) {
     background-color: color-mix(in oklab, var(--color-ink) 88%, black);
   }
@@ -354,9 +359,8 @@
     @apply border-hairline flex-1 border-b;
   }
 
-  /* These two links carried no underline and no affordance: nothing said they
-     were the way in. The tape and the tilt make them notes pinned to the page,
-     and the chevron row at the foot says they are clickable. */
+  /* The two ways into the app, as notes pinned to the page: the tape and the
+     tilt make them objects, and the chevron row at the foot says they open. */
   .action-card {
     @apply border-tableau border-l-ink bg-card p-line pt-para relative flex flex-col rounded-sm border border-l-6 no-underline shadow-sm transition-transform;
     transform: rotate(-0.5deg);

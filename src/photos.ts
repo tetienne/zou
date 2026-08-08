@@ -15,6 +15,8 @@ import {
 } from './names';
 import { findFreeFileName, planFileNames, type PhotoEntry } from './filing';
 import { required } from './dom';
+import { icon } from './icons';
+import { showRail } from './step-rail';
 import { directoryPicker as folderPicker, supportsFolders, type Directory } from './folder-access';
 import { forgetFolder, grantAccess, recallFolder, rememberFolder } from './folder-memory';
 
@@ -124,43 +126,13 @@ let destinationLabel = '';
 
 const chosenPattern = (): NamePattern => el.pattern.value as NamePattern;
 
-// --- Small icons (never colour alone) ---------------------------------------
-
-const ICON_PATHS: Record<string, string> = {
-  ready: '<path d="m20 6-11 11-5-5"/>',
-  warning:
-    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>' +
-    '<path d="M12 9v4"/><path d="M12 17h.01"/>',
-  forbidden: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
-  copied: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
-  pencil: '<path d="M12 4v10"/><path d="M12 19h.01"/>',
-  waiting: '<circle cx="12" cy="12" r="4"/>',
-};
-
-function icon(name: string, className: string): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('class', className);
-  svg.innerHTML = ICON_PATHS[name] ?? '';
-  return svg;
-}
-
 // --- The trail of the four steps --------------------------------------------
 
 const railSteps = [...el.rail.querySelectorAll('li')];
 
 /**
- * Where she is in the four moments of the page. The trail follows what she has
- * actually done — a folder opened, a destination chosen, the codes read, the
- * copy made — rather than which section is on screen, since all of them are. A
- * done step swaps its number for a tick and its kicker for the word « faite »,
- * so it never reads by colour alone.
+ * Where she is in the four moments of the page: a folder opened, a destination
+ * chosen, the codes read, the copy made.
  */
 function refreshRail(): void {
   const done = [
@@ -171,30 +143,7 @@ function refreshRail(): void {
   ];
   // The step she is in is the first one left to do; 0 once the four are done.
   const current = done.indexOf(false) + 1;
-
-  railSteps.forEach((step, index) => {
-    const number = index + 1;
-    const isDone = done[index] === true;
-    step.classList.toggle('is-done', isDone);
-    step.classList.toggle('is-current', number === current);
-    if (number === current) step.setAttribute('aria-current', 'step');
-    else step.removeAttribute('aria-current');
-
-    const disc = step.querySelector('.step-disc');
-    if (disc) {
-      disc.textContent = isDone ? '' : String(number);
-      if (isDone) disc.append(icon('ready', 'size-5'));
-    }
-
-    const kicker = step.querySelector('.eyebrow');
-    if (kicker) {
-      kicker.textContent = isDone
-        ? `Étape ${String(number)} · faite`
-        : number === current
-          ? `Étape ${String(number)} · en cours`
-          : `Étape ${String(number)}`;
-    }
-  });
+  showRail(railSteps, done, current);
 
   el.railCaption.textContent =
     current === 0 ? 'Les 4 étapes sont faites' : `Étape ${String(current)} sur 4`;
@@ -506,14 +455,14 @@ function createRow(
   } else {
     const empty = document.createElement('p');
     empty.className =
-      'flex size-full flex-col items-center justify-center gap-2 px-3 text-center ' +
+      'flex size-full flex-col items-center justify-center gap-word px-word text-center ' +
       'text-caption text-ink-soft';
     empty.append(icon('forbidden', 'size-7 text-amber-ink'), 'Aperçu impossible');
     imageArea.append(empty);
   }
 
   const bottom = document.createElement('div');
-  bottom.className = 'flex flex-1 flex-col gap-2';
+  bottom.className = 'gap-word flex flex-1 flex-col';
 
   const field = document.createElement('input');
   field.type = 'text';
@@ -528,7 +477,7 @@ function createRow(
   const statusArea = document.createElement('p');
 
   const origin = document.createElement('p');
-  origin.className = 'mt-auto pt-1 text-micro text-ink-soft break-all';
+  origin.className = 'text-micro text-ink-soft pt-hair mt-auto break-all';
   origin.textContent = originalName;
 
   bottom.append(field, nameArea, statusArea, origin);
@@ -813,11 +762,8 @@ async function copyPhotos(): Promise<void> {
   el.copyOutcome.textContent = destinationLabel
     ? `Elles sont dans ${destinationLabel}. Vos originaux n’ont pas bougé.`
     : 'Vos originaux n’ont pas bougé.';
-  el.copyDone.className = `callout ${failed ? 'callout-warn' : 'callout-ok'}`;
-  el.copyDone.replaceChildren(
-    icon(failed ? 'warning' : 'copied', 'mt-1 size-6 shrink-0'),
-    el.copyDoneText,
-  );
+  el.copyDone.className = `callout mt-line ${failed ? 'callout-warn' : 'callout-ok'}`;
+  el.copyDone.replaceChildren(icon(failed ? 'warning' : 'copied'), el.copyDoneText);
   el.copyDone.hidden = false;
   refreshSummary();
   refreshCopyButton();
@@ -875,7 +821,7 @@ async function downloadRow(row: Row): Promise<void> {
 
 function showWarning(text: string): void {
   const box = document.createElement('p');
-  box.className = 'callout callout-warn';
-  box.append(icon('warning', 'mt-1 size-6 shrink-0'), text);
+  box.className = 'callout callout-warn mt-line';
+  box.append(icon('warning'), text);
   el.warning.append(box);
 }

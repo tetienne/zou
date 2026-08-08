@@ -12,6 +12,7 @@ import {
 } from './label-theme';
 import { pages } from './label-layout';
 import { applyLayout, labelCard } from './label-card';
+import { showRail } from './step-rail';
 import { required } from './dom';
 
 // The prefix is the app's old name, and it stays: it identifies data already
@@ -80,41 +81,18 @@ function optionsChanged(): void {
   if (printedNames.length > 0) draw();
 }
 
-/** A tick rather than a number, so a done step does not read by colour alone. */
-const TICK =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" ' +
-  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="size-5">' +
-  '<path d="m4 13 5 5L20 6"/></svg>';
-
 /**
- * Where the teacher is in the three moments of the page. The trail follows what
- * she has actually done — a list typed, then a sheet drawn — rather than which
- * section happens to be on screen, since all three are.
+ * Where the teacher is in the three moments of the page: a list typed, then a
+ * sheet drawn.
  */
 function showProgress(): void {
   const typedAName = namesField.value.split('\n').some((line) => line.trim() !== '');
   const current = printedNames.length > 0 ? 3 : typedAName ? 2 : 1;
-
-  railSteps.forEach((step, index) => {
-    const number = index + 1;
-    const done = number < current;
-    step.classList.toggle('is-done', done);
-    step.classList.toggle('is-current', number === current);
-    if (number === current) step.setAttribute('aria-current', 'step');
-    else step.removeAttribute('aria-current');
-
-    const disc = step.querySelector('.step-disc');
-    if (disc) disc.innerHTML = done ? TICK : String(number);
-
-    const state = step.querySelector('.eyebrow');
-    if (state) {
-      state.textContent = done
-        ? `Étape ${String(number)} · faite`
-        : number === current
-          ? `Étape ${String(number)} · en cours`
-          : `Étape ${String(number)}`;
-    }
-  });
+  showRail(
+    railSteps,
+    railSteps.map((_, index) => index + 1 < current),
+    current,
+  );
 }
 
 function draw(): void {

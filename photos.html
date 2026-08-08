@@ -114,7 +114,7 @@
 
         <div class="panel-aside gap-line grid">
           <label class="gap-word flex items-start font-bold">
-            <input type="checkbox" id="subfolders" checked class="mt-1 size-5 shrink-0" />
+            <input type="checkbox" id="subfolders" checked class="mt-hair size-5 shrink-0" />
             <span>
               Créer un sous-dossier par prénom
               <span class="hint block font-normal">Un dossier « Léa », un dossier « Malo », et ainsi de suite.</span>
@@ -155,13 +155,11 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             aria-hidden="true"
-            class="size-6 shrink-0"
           >
             <path d="M4 12h15"></path>
             <path d="m13 6 6 6-6 6"></path>
           </svg>
         </button>
-        <!-- Why the button above is off, at body size and in full ink: photos.ts fills it. -->
         <p class="cta-reason" id="scan-blocked">
           <svg
             viewBox="0 0 24 24"
@@ -171,7 +169,6 @@
             stroke-linecap="round"
             stroke-linejoin="round"
             aria-hidden="true"
-            class="text-red-ink mt-1 size-5 shrink-0"
           >
             <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
             <path d="M12 9v4"></path>
@@ -226,7 +223,7 @@
           </div>
           <ul class="tallies" id="tallies"></ul>
 
-          <div class="callout callout-warn" id="needs-attention" role="status" hidden>
+          <div class="callout callout-warn mt-line" id="needs-attention" role="status" hidden>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -235,7 +232,6 @@
               stroke-linecap="round"
               stroke-linejoin="round"
               aria-hidden="true"
-              class="mt-1 size-6 shrink-0"
             >
               <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
               <path d="M12 9v4"></path>
@@ -250,7 +246,7 @@
             </span>
           </div>
 
-          <p class="callout callout-ok" id="all-ready" hidden>
+          <p class="callout callout-ok mt-line" id="all-ready" hidden>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -259,7 +255,6 @@
               stroke-linecap="round"
               stroke-linejoin="round"
               aria-hidden="true"
-              class="mt-1 size-6 shrink-0"
             >
               <circle cx="12" cy="12" r="10"></circle>
               <path d="m9 12 2 2 4-4"></path>
@@ -279,7 +274,6 @@
               stroke-linecap="round"
               stroke-linejoin="round"
               aria-hidden="true"
-              class="size-6 shrink-0"
             >
               <path d="M4 12h15"></path>
               <path d="m13 6 6 6-6 6"></path>
@@ -294,7 +288,6 @@
               stroke-linecap="round"
               stroke-linejoin="round"
               aria-hidden="true"
-              class="text-red-ink mt-1 size-5 shrink-0"
             >
               <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
               <path d="M12 9v4"></path>
@@ -306,7 +299,7 @@
 
           <!-- Its icon says which of the two endings this is, so photos.ts puts
                it there rather than the page. -->
-          <p class="callout callout-ok" id="copy-done" role="status" hidden>
+          <p class="callout callout-ok mt-line" id="copy-done" role="status" hidden>
             <span id="copy-done-text">
               <strong id="copy-status"></strong>
               <span id="copy-outcome"></span>
@@ -324,24 +317,15 @@
           <div class="border-ink-soft inline-flex overflow-hidden rounded-sm border-2">
             <label class="border-ink-soft border-r-2">
               <input type="radio" name="size" value="small" class="peer sr-only" />
-              <span
-                class="text-caption peer-focus-visible:outline-margin-red peer-checked:bg-ink peer-checked:text-card hover:bg-paper-shade block cursor-pointer px-3 py-1 font-bold peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2"
-                >Petites</span
-              >
+              <span class="pill">Petites</span>
             </label>
             <label class="border-ink-soft border-r-2">
               <input type="radio" name="size" value="medium" class="peer sr-only" checked />
-              <span
-                class="text-caption peer-focus-visible:outline-margin-red peer-checked:bg-ink peer-checked:text-card hover:bg-paper-shade block cursor-pointer px-3 py-1 font-bold peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2"
-                >Moyennes</span
-              >
+              <span class="pill">Moyennes</span>
             </label>
             <label>
               <input type="radio" name="size" value="large" class="peer sr-only" />
-              <span
-                class="text-caption peer-focus-visible:outline-margin-red peer-checked:bg-ink peer-checked:text-card hover:bg-paper-shade block cursor-pointer px-3 py-1 font-bold peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2"
-                >Grandes</span
-              >
+              <span class="pill">Grandes</span>
             </label>
           </div>
         </fieldset>
@@ -360,16 +344,9 @@
       </div>
     </main>
 
-    <footer
-      class="border-tableau text-caption text-ink-soft gap-line mt-section pt-line mx-auto flex max-w-5xl items-center border-t-3 border-double"
-    >
-      <a
-        class="gap-word text-ink-soft hover:text-red-ink inline-flex items-center hover:underline"
-        href="%SOURCE_URL%"
-        target="_blank"
-        rel="noreferrer"
-      >
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4">
+    <footer class="page-foot">
+      <a href="%SOURCE_URL%" target="_blank" rel="noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path
             d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.73 1.27 3.4.97.1-.75.4-1.27.73-1.56-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
           ></path>
